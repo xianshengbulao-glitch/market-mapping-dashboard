@@ -1,0 +1,2388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>五维三层市场分析仪表盘</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<style>
+:root{
+  --bg:#080c14;
+  --card:#111827;
+  --text:#e2e8f0;
+  --border:#1e293b;
+  --accent:#3b82f6;
+  --accent2:#10b981;
+  --accent3:#f59e0b;
+  --accent4:#ef4444;
+  --muted:#94a3b8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+  line-height:1.6;
+}
+.container{max-width:1400px;margin:0 auto;padding:20px}
+header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:20px 0;border-bottom:1px solid var(--border);margin-bottom:24px;flex-wrap:wrap;gap:12px
+}
+header h1{font-size:22px;font-weight:700}
+.date-select{
+  background:var(--card);color:var(--text);border:1px solid var(--border);
+  padding:8px 14px;border-radius:6px;font-size:14px;cursor:pointer
+}
+.tabs{
+  display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:8px
+}
+.tab-btn{
+  background:transparent;color:var(--muted);border:1px solid transparent;
+  padding:8px 16px;border-radius:6px;cursor:pointer;font-size:14px;transition:all .2s
+}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{background:var(--card);color:var(--text);border-color:var(--border);font-weight:600}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.card{
+  background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px
+}
+.card-title{
+  font-size:16px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px
+}
+.card-title::before{
+  content:'';display:inline-block;width:4px;height:16px;background:var(--accent);border-radius:2px
+}
+.kpi-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:16px
+}
+.kpi-card{
+  background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px;text-align:center
+}
+.kpi-value{font-size:28px;font-weight:700;margin:6px 0}
+.kpi-label{font-size:13px;color:var(--muted)}
+.kpi-delta{font-size:12px;margin-top:4px}
+.positive{color:var(--accent2)}
+.negative{color:var(--accent4)}
+.neutral{color:var(--accent3)}
+.bar-row{display:flex;align-items:center;gap:12px;margin:10px 0}
+.bar-label{width:70px;font-size:13px;color:var(--muted);text-align:right;flex-shrink:0}
+.bar-track{flex:1;height:22px;background:#1e293b;border-radius:4px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:4px;transition:width .6s ease}
+.bar-val{position:absolute;right:8px;top:0;font-size:12px;line-height:22px;color:var(--text)}
+table{
+  width:100%;border-collapse:collapse;font-size:13px
+}
+th,td{
+  padding:10px 12px;text-align:left;border-bottom:1px solid var(--border)
+}
+th{
+  color:var(--muted);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.4px
+}
+tr:hover td{background:rgba(59,130,246,.06)}
+.tag{
+  display:inline-block;padding:3px 10px;border-radius:4px;font-size:12px;font-weight:500
+}
+.tag-correct{background:rgba(16,185,129,.15);color:#34d399}
+.tag-partial{background:rgba(245,158,11,.15);color:#fbbf24}
+.tag-wrong{background:rgba(239,68,68,.15);color:#f87171}
+.chart-box{width:100%;height:360px}
+.chart-box-sm{width:100%;height:280px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.two-col{grid-template-columns:1fr}}
+.pie-center{text-align:center;padding:20px}
+.formula-box{
+  background:rgba(59,130,246,.08);border:1px dashed var(--border);border-radius:8px;
+  padding:14px 16px;font-family:monospace;font-size:13px;color:#93c5fd;line-height:1.8
+}
+.monitor-list{list-style:none}
+.monitor-list li{
+  padding:10px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px
+}
+.monitor-list li::before{
+  content:'◆';color:var(--accent);font-size:10px
+}
+.stage-badge{
+  display:inline-block;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:600;
+  background:rgba(59,130,246,.15);color:#60a5fa
+}
+
+/* === 升级样式 v3.0 === */
+.glass-card {
+  background: linear-gradient(145deg, rgba(17,24,39,0.95), rgba(30,41,59,0.85));
+  border: 1px solid rgba(59,130,246,0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+}
+.glass-card:hover {
+  border-color: rgba(59,130,246,0.3);
+  box-shadow: 0 8px 32px rgba(59,130,246,0.08);
+}
+.score-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 14px;
+}
+.score-high { background: rgba(16,185,129,0.2); color: #34d399; }
+.score-mid { background: rgba(245,158,11,0.2); color: #fbbf24; }
+.score-low { background: rgba(239,68,68,0.2); color: #f87171; }
+.derivation-path {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(59,130,246,0.06);
+  border-radius: 8px;
+  margin: 6px 0;
+  font-size: 13px;
+  border-left: 3px solid var(--accent);
+}
+.derivation-arrow { color: var(--accent); font-weight: bold; }
+.weight-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  background: rgba(59,130,246,0.12);
+  color: #60a5fa;
+}
+.timeline-item {
+  position: relative;
+  padding-left: 24px;
+  padding-bottom: 16px;
+  border-left: 2px solid var(--border);
+}
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.timeline-item.correct::before { background: #10b981; }
+.timeline-item.wrong::before { background: #ef4444; }
+.timeline-item.partial::before { background: #f59e0b; }
+.prediction-card {
+  background: linear-gradient(145deg, rgba(59,130,246,0.08), rgba(17,24,39,0.9));
+  border: 1px solid rgba(59,130,246,0.2);
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 12px;
+}
+.prediction-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.macro-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.macro-bull { background: rgba(16,185,129,0.15); color: #34d399; }
+.macro-bear { background: rgba(239,68,68,0.15); color: #f87171; }
+.macro-neutral { background: rgba(245,158,11,0.15); color: #fbbf24; }
+.factor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+}
+.factor-item {
+  background: rgba(30,41,59,0.5);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+}
+.factor-title { font-weight: 600; font-size: 14px; margin-bottom: 6px; color: var(--text); }
+.factor-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.factor-score { font-size: 20px; font-weight: 700; margin-top: 8px; }
+
+
+/* === 交互增强 v3.1 === */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.tab-panel.active .card, .tab-panel.active .glass-card {
+  animation: fadeIn 0.4s ease forwards;
+}
+.tab-panel.active .card:nth-child(2) { animation-delay: 0.05s; }
+.tab-panel.active .card:nth-child(3) { animation-delay: 0.1s; }
+.tab-panel.active .card:nth-child(4) { animation-delay: 0.15s; }
+.tab-panel.active .glass-card:nth-child(2) { animation-delay: 0.05s; }
+.tab-panel.active .glass-card:nth-child(3) { animation-delay: 0.1s; }
+.tab-panel.active .glass-card:nth-child(4) { animation-delay: 0.15s; }
+
+.tab-btn {
+  position: relative;
+  overflow: hidden;
+}
+.tab-btn::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: var(--accent);
+  transition: all 0.3s ease;
+  transform: translateX(-50%);
+}
+.tab-btn.active::after, .tab-btn:hover::after {
+  width: 80%;
+}
+
+.kpi-card {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.kpi-card:hover::before {
+  opacity: 1;
+}
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(59,130,246,0.12);
+}
+
+.derivation-path {
+  transition: all 0.2s ease;
+}
+.derivation-path:hover {
+  background: rgba(59,130,246,0.1);
+  transform: translateX(4px);
+}
+
+/* === 高级质感升级 v3.2 === */
+body {
+  background: linear-gradient(135deg, #080c14 0%, #0a0f1a 50%, #080c14 100%);
+  background-attachment: fixed;
+}
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(ellipse at 20% 20%, rgba(59,130,246,0.03) 0%, transparent 50%),
+              radial-gradient(ellipse at 80% 80%, rgba(16,185,129,0.02) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+.container {
+  position: relative;
+  z-index: 1;
+}
+header h1 {
+  background: linear-gradient(90deg, #e2e8f0, #60a5fa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.card {
+  background: linear-gradient(145deg, rgba(17,24,39,0.9), rgba(30,41,59,0.8));
+  border: 1px solid rgba(59,130,246,0.12);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+}
+.card:hover {
+  border-color: rgba(59,130,246,0.25);
+  box-shadow: 0 8px 32px rgba(59,130,246,0.1);
+}
+.date-select {
+  background: linear-gradient(145deg, rgba(17,24,39,0.9), rgba(30,41,59,0.8));
+  border: 1px solid rgba(59,130,246,0.15);
+  transition: all 0.2s ease;
+}
+.date-select:hover {
+  border-color: rgba(59,130,246,0.3);
+  box-shadow: 0 0 12px rgba(59,130,246,0.1);
+}
+tbody tr:nth-child(even) td {
+  background: rgba(30,41,59,0.2);
+}
+tbody tr:hover td {
+  background: rgba(59,130,246,0.08) !important;
+}
+.glass-card {
+  background: linear-gradient(145deg, rgba(17,24,39,0.92), rgba(30,41,59,0.82));
+  border: 1px solid rgba(59,130,246,0.12);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+.stock-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 16px;
+}
+/* 响应式优化 */
+@media(max-width:768px){
+  .container{padding:12px}
+  header h1{font-size:18px}
+  .tabs{gap:4px}
+  .tab-btn{padding:6px 10px;font-size:12px}
+  .kpi-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .kpi-value{font-size:22px}
+  .chart-box{height:280px}
+  .stock-card-grid{grid-template-columns:1fr}
+}
+
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+  <h1>五维三层市场分析仪表盘</h1>
+  <select id="dateSelect" class="date-select"></select>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="overview">总览仪表盘</button>
+  <button class="tab-btn" data-tab="engine">推导引擎</button>
+  <button class="tab-btn" data-tab="verify">预测验证</button>
+  <button class="tab-btn" data-tab="strategy">明日策略</button>
+  <button class="tab-btn" data-tab="history">历史趋势</button>
+  <button class="tab-btn" data-tab="capital">资金流向</button>
+  <button class="tab-btn" data-tab="stocks">个股诊断</button>
+  <button class="tab-btn" data-tab="weekly">周度复盘</button>
+  <button class="tab-btn" data-tab="model">模型档案</button>
+</div>
+
+<!-- 1. 总览仪表盘 -->
+<div id="panel-overview" class="tab-panel active">
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">五维评分</div>
+      <div class="kpi-value" id="kpi-score">--</div>
+      <div class="kpi-delta" id="kpi-score-delta">--</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">挨打指数</div>
+      <div class="kpi-value" id="kpi-beating">--</div>
+      <div class="kpi-delta" id="kpi-beating-delta">--</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">市场阶段</div>
+      <div class="kpi-value" style="font-size:20px"><span class="stage-badge" id="kpi-stage">--</span></div>
+      <div class="kpi-delta" id="kpi-stage-desc">--</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">预测准确率</div>
+      <div class="kpi-value" id="kpi-accuracy">--</div>
+      <div class="kpi-delta" id="kpi-accuracy-detail">--</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">阶段转换时间线</div>
+    <div id="stageTimeline"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">五维评分详情</div>
+    <div id="fiveDimBars"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">核心变量 TOP3</div>
+    <div id="coreVariables"></div>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">五维雷达图</div>
+      <div id="radarChart" class="chart-box"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">市场情绪仪表盘</div>
+      <div id="gaugeChart" class="chart-box"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">市场温度计</div>
+    <div id="thermometerBars"></div>
+  </div>
+</div>
+
+<!-- 2. 推导引擎 -->
+<div id="panel-engine" class="tab-panel">
+  <!-- 2.1 五维评分推导总览 -->
+  <div class="glass-card">
+    <div class="card-title">五维评分推导总览</div>
+    <div id="engineOverview"></div>
+  </div>
+  <!-- 2.2 逐维度深度推导 -->
+  <div class="glass-card">
+    <div class="card-title">逐维度深度推导</div>
+    <div id="engineDeep"></div>
+  </div>
+  <!-- 2.3 核心变量→评分映射链 -->
+  <div class="glass-card">
+    <div class="card-title">核心变量 → 评分映射链</div>
+    <div id="engineMapping"></div>
+  </div>
+  <!-- 2.4 预测推演路径 -->
+  <div class="glass-card">
+    <div class="card-title">预测推演路径</div>
+    <div id="enginePrediction"></div>
+  </div>
+  <!-- 2.5 权重调整历史 -->
+  <div class="glass-card">
+    <div class="card-title">模型权重调整历史</div>
+    <div id="engineWeights"></div>
+  </div>
+  <!-- 2.6 核心计算公式 -->
+  <div class="glass-card">
+    <div class="card-title">核心计算公式</div>
+    <div class="formula-box">
+      五维平均分 = (宏观 + 微观 + 外围 + 内围 + 风格) / 5<br>
+      挨打指数 = 100 - 五维平均分 × 10<br>
+      市场阶段 = f(五维平均分, 挨打指数, 趋势变化率)<br>
+      信号强度 = 置信度 × 历史准确率权重<br>
+      预测置信度 = Σ(各维度置信度 × 维度权重) × 历史准确率修正
+    </div>
+  </div>
+</div>
+
+<!-- 3. 预测验证 -->
+<div id="panel-verify" class="tab-panel">
+  <div class="card">
+    <div class="card-title">预测与实际对比</div>
+    <table id="verifyTable">
+      <thead>
+        <tr><th>日期</th><th>预测方向</th><th>置信度</th><th>实际结果</th><th>验证</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-title">模型学习记录</div>
+    <div id="modelLearning"></div>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">验证统计图</div>
+      <div id="verifyChart" class="chart-box"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">预测准确率趋势</div>
+      <div id="accuracyTrendChart" class="chart-box"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. 明日策略 -->
+<div id="panel-strategy" class="tab-panel">
+  <div class="two-col">
+    <div class="prediction-card">
+      <div class="prediction-header">
+        <div style="font-size:18px;font-weight:700">明日方向预测</div>
+        <span id="strategyConfidenceBadge" class="stage-badge">--</span>
+      </div>
+      <div id="strategyDirection" style="font-size:16px;margin-bottom:10px"></div>
+      <div id="strategyReason" style="font-size:13px;color:#94a3b8;line-height:1.7"></div>
+    </div>
+    <div class="glass-card">
+      <div class="card-title">关键假设</div>
+      <div id="strategyAssumptions"></div>
+    </div>
+  </div>
+  <div class="glass-card">
+    <div class="card-title">监控清单</div>
+    <ul class="monitor-list" id="monitorList"></ul>
+  </div>
+  <div class="glass-card">
+    <div class="card-title">推演路径图</div>
+    <div id="strategyChart" class="chart-box"></div>
+  </div>
+  <div class="glass-card">
+    <div class="card-title">风险警示</div>
+    <div id="strategyRisks"></div>
+  </div>
+</div>
+
+<!-- 5. 历史趋势 -->
+<div id="panel-history" class="tab-panel">
+  <div class="card">
+    <div class="card-title">挨打指数趋势</div>
+    <div id="beatingChart" class="chart-box"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">板块热力图</div>
+    <div id="sectorHeatChart" class="chart-box"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">五维评分趋势</div>
+    <div id="fiveDimTrendChart" class="chart-box"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">市场情绪指数历史</div>
+    <div id="sentimentChart" class="chart-box"></div>
+  </div>
+</div>
+
+<!-- 6. 模型档案 -->
+<div id="panel-model" class="tab-panel">
+  <div class="two-col">
+    <div class="glass-card">
+      <div class="card-title">五维评分对比</div>
+      <div id="dimCompareChart" class="chart-box"></div>
+    </div>
+    <div class="glass-card">
+      <div class="card-title">准确率分布</div>
+      <div id="accuracyPie" class="chart-box-sm"></div>
+    </div>
+  </div>
+  <div class="glass-card">
+    <div class="card-title">权重调整历史</div>
+    <div id="weightHistory"></div>
+  </div>
+  <div class="glass-card">
+    <div class="card-title">历史预测记录</div>
+    <table id="historyTable">
+      <thead>
+        <tr><th>日期</th><th>信号ID</th><th>预测方向</th><th>置信度</th><th>实际结果</th><th>验证</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 7. 资金流向 -->
+<div id="panel-capital" class="tab-panel">
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">主力净流入</div>
+      <div class="kpi-value" id="capital-net">--</div>
+      <div class="kpi-delta" id="capital-net-delta">--</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">流入Top1</div>
+      <div class="kpi-value" style="font-size:20px" id="capital-in1">--</div>
+      <div class="kpi-delta" id="capital-in1-amount">--</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">流出Top1</div>
+      <div class="kpi-value" style="font-size:20px" id="capital-out1">--</div>
+      <div class="kpi-delta" id="capital-out1-amount">--</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">资金情绪</div>
+      <div class="kpi-value" style="font-size:20px"><span class="stage-badge" id="capital-sentiment">--</span></div>
+      <div class="kpi-delta" id="capital-sentiment-desc">--</div>
+    </div>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">主力资金流入排行</div>
+      <div id="capitalInChart" class="chart-box"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">主力资金流出排行</div>
+      <div id="capitalOutChart" class="chart-box"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">资金流向明细</div>
+    <table id="capitalTable">
+      <thead>
+        <tr><th>板块</th><th>流入(亿)</th><th>排名</th><th>趋势</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 8. 个股诊断 -->
+<div id="panel-stocks" class="tab-panel">
+  <div class="card">
+    <div class="card-title">今日个股诊断</div>
+    <div id="stockPicksCards"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">个股评分趋势</div>
+    <div id="stockTrendChart" class="chart-box"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">诊断历史记录</div>
+    <table id="stockHistoryTable">
+      <thead>
+        <tr><th>日期</th><th>代码</th><th>名称</th><th>信号</th><th>评分</th><th>理由</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 9. 周度复盘 -->
+<div id="panel-weekly" class="tab-panel">
+  <div class="two-col">
+    <div class="glass-card">
+      <div class="card-title">本周概览</div>
+      <div id="weeklySummary"></div>
+    </div>
+    <div class="glass-card">
+      <div class="card-title">本周关键事件</div>
+      <div id="weeklyEvents"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">本周预测验证</div>
+    <div id="weeklyVerify"></div>
+  </div>
+  <div class="two-col">
+    <div class="glass-card">
+      <div class="card-title">下周展望</div>
+      <div id="weeklyOutlook"></div>
+    </div>
+    <div class="glass-card">
+      <div class="card-title">下周监控清单</div>
+      <ul class="monitor-list" id="weeklyMonitor"></ul>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+// 自动生成 — 数据源: daily/*.json
+// 请勿手动修改，使用 build_data.py 重新生成
+
+const dataAll = [
+  {
+    "meta": {
+      "system": "五维三层市场分析系统 v3.2",
+      "date": "2026-07-06",
+      "signal_id": "SIG-20260706-001",
+      "version": "3.2"
+    },
+    "market_variables_top3": [
+      "科创50暴跌-7.7%，半导体算力硬件产业链大幅回调",
+      "上证跌破4100点，深成指/创业板暴跌",
+      "全市场超5000只个股下跌，恐慌情绪蔓延"
+    ],
+    "five_dimensions": {
+      "macro": {
+        "name": "宏观",
+        "score": 2,
+        "max": 10,
+        "bias": "偏空",
+        "detail": "上证-2.03%跌破4100，深成指-3.85%/创业板-5.71%，全面暴跌"
+      },
+      "micro": {
+        "name": "微观",
+        "score": 2,
+        "max": 10,
+        "bias": "全面调整",
+        "detail": "科创50暴跌-7.7%，半导体、算力、存储全线下挫；仅超硬材料/黄金逆势"
+      },
+      "peripheral": {
+        "name": "外围",
+        "score": 3,
+        "max": 10,
+        "bias": "偏空",
+        "detail": "美股科技股调整传导，亚太市场情绪受压"
+      },
+      "internal": {
+        "name": "内围",
+        "score": 2,
+        "max": 10,
+        "bias": "失血",
+        "detail": "全市场恐慌抛售，主力资金大幅净流出，融资盘踩踏"
+      },
+      "style": {
+        "name": "风格",
+        "score": 2,
+        "max": 10,
+        "bias": "无差别杀跌",
+        "detail": "成长价值双杀，科技蓝筹普跌；无明显风格偏好"
+      }
+    },
+    "summary": {
+      "avg_score": 2.2,
+      "beating_index": 80.0,
+      "stage": "暴跌期",
+      "stage_desc": "利空集中释放，全市场恐慌性杀跌"
+    },
+    "prediction_verify": {
+      "source": "前序预测",
+      "content": "科技板块短期承压，注意风险",
+      "actual": "科创50暴跌-7.7%，验证悲观预期",
+      "result": "correct"
+    },
+    "model_learning": {
+      "lessons": [
+        "高位科技板块回调幅度远超预期，需加强风险预警",
+        "利空半衰期模型启动：暴跌当日为最坏时刻"
+      ],
+      "weight_adjustments": {
+        "risk_warning": "+1.5",
+        "time_decay": "+1.0"
+      }
+    },
+    "next_day_prediction": {
+      "direction": "探底企稳",
+      "confidence": 55,
+      "reason": "暴跌后次日通常有技术性反弹"
+    },
+    "sector_heat": {
+      "半导体": 0,
+      "AI算力": 0,
+      "新能源": 0,
+      "消费": 1.2,
+      "金融": 2.7,
+      "医药": 6.2,
+      "军工": 6.7,
+      "周期": 9.2
+    },
+    "capital_flow": {
+      "inflow": [
+        {
+          "name": "黄金",
+          "amount": 28.5
+        },
+        {
+          "name": "超硬材料",
+          "amount": 12.3
+        },
+        {
+          "name": "银行",
+          "amount": 8.7
+        }
+      ],
+      "outflow": [
+        {
+          "name": "半导体",
+          "amount": -156.2
+        },
+        {
+          "name": "AI算力",
+          "amount": -98.5
+        },
+        {
+          "name": "消费电子",
+          "amount": -67.3
+        }
+      ]
+    },
+    "stock_picks": [
+      {
+        "code": "000100.SZ",
+        "name": "TCL科技",
+        "signal": "观望",
+        "score": 3.5,
+        "reason": "主升浪后洗盘，等待缩量止跌信号"
+      },
+      {
+        "code": "688981.SH",
+        "name": "中芯国际",
+        "signal": "回避",
+        "score": 2.0,
+        "reason": "半导体板块暴跌，短期回避"
+      },
+      {
+        "code": "601899.SH",
+        "name": "紫金矿业",
+        "signal": "关注",
+        "score": 6.5,
+        "reason": "黄金避险属性，资金流入"
+      }
+    ]
+  },
+  {
+    "meta": {
+      "system": "五维三层市场分析系统 v3.2",
+      "date": "2026-07-07",
+      "signal_id": "SIG-20260707-001",
+      "version": "3.2"
+    },
+    "market_variables_top3": [
+      "大盘下探4000点关口，市场寻底",
+      "科创50连续3日微涨企稳，科技板块止跌信号",
+      "深成指/创业板持续走弱，资金向主板集中"
+    ],
+    "five_dimensions": {
+      "macro": {
+        "name": "宏观",
+        "score": 3,
+        "max": 10,
+        "bias": "偏空",
+        "detail": "上证-1.26%下探4000点，但科创50微涨+0.27%止跌；外围暂无新增利空"
+      },
+      "micro": {
+        "name": "微观",
+        "score": 5,
+        "max": 10,
+        "bias": "结构性机会",
+        "detail": "大盘调整但科技板块初步止跌；深成指-1.24%/创业板-0.94%仍弱"
+      },
+      "peripheral": {
+        "name": "外围",
+        "score": 4,
+        "max": 10,
+        "bias": "中性偏弱",
+        "detail": "外围市场平稳，亚太情绪缓和"
+      },
+      "internal": {
+        "name": "内围",
+        "score": 3,
+        "max": 10,
+        "bias": "失血",
+        "detail": "上证缩量跌至3990，量能萎缩至5144亿；科创放量止跌"
+      },
+      "style": {
+        "name": "风格",
+        "score": 5,
+        "max": 10,
+        "bias": "均衡",
+        "detail": "科技成长初步企稳，价值蓝筹补跌；风格向成长倾斜"
+      }
+    },
+    "summary": {
+      "avg_score": 4.0,
+      "beating_index": 60.0,
+      "stage": "寻底期",
+      "stage_desc": "大盘调整但科技先行企稳，市场处于寻底阶段"
+    },
+    "prediction_verify": {
+      "source": "SIG-20260706",
+      "content": "暴跌后次日技术性反弹",
+      "actual": "上证继续下跌-1.26%，预测部分错误",
+      "result": "partial"
+    },
+    "model_learning": {
+      "lessons": [
+        "暴跌次日不反弹，说明抛压未完全释放",
+        "科创50领先企稳，可作为先行指标"
+      ],
+      "weight_adjustments": {
+        "leading_index": "+0.5",
+        "rebound_timing": "-0.3"
+      }
+    },
+    "next_day_prediction": {
+      "direction": "继续筑底",
+      "confidence": 50,
+      "reason": "科创50三连阳，但主板仍弱，分化加剧"
+    },
+    "sector_heat": {
+      "半导体": 0,
+      "AI算力": 1,
+      "新能源": 0.5,
+      "消费": 4,
+      "金融": 6.5,
+      "医药": 5,
+      "军工": 8.5,
+      "周期": 8
+    },
+    "capital_flow": {
+      "inflow": [
+        {
+          "name": "半导体",
+          "amount": 15.2
+        },
+        {
+          "name": "科创50ETF",
+          "amount": 8.6
+        },
+        {
+          "name": "黄金",
+          "amount": 5.3
+        }
+      ],
+      "outflow": [
+        {
+          "name": "银行",
+          "amount": -32.1
+        },
+        {
+          "name": "地产",
+          "amount": -18.5
+        },
+        {
+          "name": "保险",
+          "amount": -12.7
+        }
+      ]
+    },
+    "stock_picks": [
+      {
+        "code": "000100.SZ",
+        "name": "TCL科技",
+        "signal": "观望",
+        "score": 4.0,
+        "reason": "洗盘持续，量能未缩至地量"
+      },
+      {
+        "code": "688981.SH",
+        "name": "中芯国际",
+        "signal": "关注",
+        "score": 5.0,
+        "reason": "科创50止跌，半导体或有修复"
+      },
+      {
+        "code": "688012.SH",
+        "name": "中微公司",
+        "signal": "关注",
+        "score": 5.5,
+        "reason": "科技板块先行企稳信号"
+      }
+    ]
+  },
+  {
+    "meta": {
+      "system": "五维三层市场分析系统 v3.2",
+      "date": "2026-07-08",
+      "signal_id": "SIG-20260708-001",
+      "version": "3.2"
+    },
+    "market_variables_top3": [
+      "深成指/创业板加速下行，创阶段新低",
+      "科创50三连阳逆势走强，资金持续流入科技",
+      "上证逼近3970，市场恐慌情绪蔓延"
+    ],
+    "five_dimensions": {
+      "macro": {
+        "name": "宏观",
+        "score": 5,
+        "max": 10,
+        "bias": "中性",
+        "detail": "上证-0.49%续跌，深成指-1.87%/创业板-1.70%加速下行"
+      },
+      "micro": {
+        "name": "微观",
+        "score": 5,
+        "max": 10,
+        "bias": "结构性机会",
+        "detail": "科创50+0.73%三连阳，科技板块逆势走强；中小盘承压"
+      },
+      "peripheral": {
+        "name": "外围",
+        "score": 4,
+        "max": 10,
+        "bias": "中性偏弱",
+        "detail": "外围平稳，A股内部调整为主"
+      },
+      "internal": {
+        "name": "内围",
+        "score": 5,
+        "max": 10,
+        "bias": "震荡",
+        "detail": "上证缩量至4962亿，科创放量至1572亿；资金从主板向科创迁移"
+      },
+      "style": {
+        "name": "风格",
+        "score": 5,
+        "max": 10,
+        "bias": "均衡",
+        "detail": "科技成长三连阳，价值蓝筹持续调整；风格切换明显"
+      }
+    },
+    "summary": {
+      "avg_score": 4.8,
+      "beating_index": 52.0,
+      "stage": "筑底期",
+      "stage_desc": "科技先行筑底，主板持续寻底，分化加剧"
+    },
+    "prediction_verify": {
+      "source": "SIG-20260707",
+      "content": "继续筑底，分化加剧",
+      "actual": "科创50三连阳，主板续跌，分化验证",
+      "result": "correct"
+    },
+    "model_learning": {
+      "lessons": [
+        "科创50三连阳确认领先性，资金向科技迁移",
+        "风格切换信号明确：主板→科创"
+      ],
+      "weight_adjustments": {
+        "style_rotation": "+1.0",
+        "leading_index": "+0.8"
+      }
+    },
+    "next_day_prediction": {
+      "direction": "科技修复",
+      "confidence": 60,
+      "reason": "科创50三连阳，AI硬件板块3个交易日内存在情绪修复反弹"
+    },
+    "sector_heat": {
+      "半导体": 1.3,
+      "AI算力": 1.8,
+      "新能源": 3.3,
+      "消费": 2.8,
+      "金融": 7.3,
+      "医药": 9.8,
+      "军工": 9.3,
+      "周期": 10
+    },
+    "capital_flow": {
+      "inflow": [
+        {
+          "name": "半导体",
+          "amount": 42.8
+        },
+        {
+          "name": "AI算力",
+          "amount": 28.5
+        },
+        {
+          "name": "先进封装",
+          "amount": 18.3
+        }
+      ],
+      "outflow": [
+        {
+          "name": "银行",
+          "amount": -28.6
+        },
+        {
+          "name": "白酒",
+          "amount": -15.2
+        },
+        {
+          "name": "地产",
+          "amount": -11.8
+        }
+      ]
+    },
+    "stock_picks": [
+      {
+        "code": "000100.SZ",
+        "name": "TCL科技",
+        "signal": "关注",
+        "score": 5.0,
+        "reason": "洗盘进入尾声，关注量能变化"
+      },
+      {
+        "code": "688981.SH",
+        "name": "中芯国际",
+        "signal": "看多",
+        "score": 7.0,
+        "reason": "科创50三连阳，半导体资金持续流入"
+      },
+      {
+        "code": "002371.SZ",
+        "name": "北方华创",
+        "signal": "看多",
+        "score": 6.5,
+        "reason": "半导体设备龙头，资金净流入"
+      }
+    ]
+  },
+  {
+    "meta": {
+      "system": "五维三层市场分析系统 v3.2",
+      "date": "2026-07-09",
+      "signal_id": "SIG-20260709-001",
+      "version": "3.2"
+    },
+    "market_variables_top3": [
+      "科创50暴涨+8.41%，AI硬件板块情绪修复",
+      "三大指数全面大涨，市场信心恢复",
+      "量能显著放大至2.93万亿，增量资金入场"
+    ],
+    "five_dimensions": {
+      "macro": {
+        "name": "宏观",
+        "score": 7,
+        "max": 10,
+        "bias": "偏多",
+        "detail": "上证大涨+1.65%收复4000点报4036.59，深成指+3.07%/创业板+4.49%，全面修复"
+      },
+      "micro": {
+        "name": "微观",
+        "score": 8,
+        "max": 10,
+        "bias": "科技爆发",
+        "detail": "科创50暴涨+8.41%创阶段最大单日涨幅；半导体全线爆发，中芯国际涨超14%"
+      },
+      "peripheral": {
+        "name": "外围",
+        "score": 6,
+        "max": 10,
+        "bias": "中性偏强",
+        "detail": "美股芯片股普涨，应用材料涨近10%；SK海力士ADR定价催化全球半导体情绪"
+      },
+      "internal": {
+        "name": "内围",
+        "score": 7,
+        "max": 10,
+        "bias": "承接",
+        "detail": "上证放量至5530亿，科创放量至2245亿；增量资金入场，主力资金回流半导体"
+      },
+      "style": {
+        "name": "风格",
+        "score": 7,
+        "max": 10,
+        "bias": "科技成长",
+        "detail": "科技成长暴力反弹，双创领涨；风格切换至成长确认，长鑫科技申购催化"
+      }
+    },
+    "summary": {
+      "avg_score": 6.4,
+      "beating_index": 36.0,
+      "stage": "修复期",
+      "stage_desc": "科技板块暴力修复，市场从筑底转向反弹"
+    },
+    "prediction_verify": {
+      "source": "SIG-20260708 P4",
+      "content": "AI硬件板块3个交易日内存在情绪修复反弹",
+      "actual": "7/9科创50暴涨+8.41%，3日累计涨幅+9.45%，预测完全验证",
+      "result": "correct"
+    },
+    "model_learning": {
+      "lessons": [
+        "利空半衰期模型有效：7/2暴跌→7/6企稳→7/9修复，完整3日周期",
+        "A股对美股利空的脱敏能力强于预期：7/6当日即反弹",
+        "科创50领先性确认：7/7-7/8三连阳领先主板见底"
+      ],
+      "weight_adjustments": {
+        "time_decay": "+1.0（3日修复窗口验证有效，延长权重）",
+        "leading_index": "+0.8（科创50领先上证1-2日，提高权重）",
+        "internal_resilience": "+0.5（A股内生性韧性被持续低估）"
+      }
+    },
+    "next_day_prediction": {
+      "direction": "震荡分化",
+      "confidence": 55,
+      "reason": "暴涨次日通常分化，关注半导体持续性；上证4036点压力需消化"
+    },
+    "sector_heat": {
+      "半导体": 3.5,
+      "AI算力": 6,
+      "新能源": 7.5,
+      "消费": 6,
+      "金融": 9.5,
+      "医药": 9,
+      "军工": 10,
+      "周期": 10
+    },
+    "capital_flow": {
+      "inflow": [
+        {
+          "name": "半导体",
+          "amount": 128.5
+        },
+        {
+          "name": "AI算力",
+          "amount": 86.3
+        },
+        {
+          "name": "中芯国际",
+          "amount": 45.2
+        },
+        {
+          "name": "先进封装",
+          "amount": 38.7
+        }
+      ],
+      "outflow": [
+        {
+          "name": "银行",
+          "amount": -22.1
+        },
+        {
+          "name": "白酒",
+          "amount": -8.5
+        },
+        {
+          "name": "保险",
+          "amount": -6.3
+        }
+      ]
+    },
+    "stock_picks": [
+      {
+        "code": "000100.SZ",
+        "name": "TCL科技",
+        "signal": "看多",
+        "score": 6.5,
+        "reason": "市场情绪全面修复，科技股普涨"
+      },
+      {
+        "code": "688981.SH",
+        "name": "中芯国际",
+        "signal": "强烈看多",
+        "score": 8.5,
+        "reason": "暴涨14%，半导体情绪全面爆发"
+      },
+      {
+        "code": "601138.SH",
+        "name": "工业富联",
+        "signal": "强烈看多",
+        "score": 8.0,
+        "reason": "业绩预增100%，算力板块龙头"
+      }
+    ]
+  },
+  {
+    "meta": {
+      "system": "五维三层市场分析系统 v3.2",
+      "date": "2026-07-10",
+      "signal_id": "SIG-20260710-001",
+      "version": "3.2"
+    },
+    "market_variables_top3": [
+      "科创50延续强势+2.5%，先进封装板块持续爆发",
+      "美股科技股大涨催化，半导体情绪持续升温",
+      "量能维持2.5万亿高位，但较昨日略缩，分化加剧"
+    ],
+    "five_dimensions": {
+      "macro": {
+        "name": "宏观",
+        "score": 7,
+        "max": 10,
+        "bias": "偏多",
+        "detail": "上证+0.35%报4050点，延续昨日修复；深成指+0.8%/创业板+1.2%，温和上涨"
+      },
+      "micro": {
+        "name": "微观",
+        "score": 8,
+        "max": 10,
+        "bias": "科技持续",
+        "detail": "科创50+2.5%延续强势；先进封装板块再度高开，华天科技创新高；半导体分化中龙头持续"
+      },
+      "peripheral": {
+        "name": "外围",
+        "score": 7,
+        "max": 10,
+        "bias": "中性偏强",
+        "detail": "美股纳指+1.30%芯片股普涨；SK海力士ADR纳斯达克首日交易；但中东局势紧张，特朗普加关税风险"
+      },
+      "internal": {
+        "name": "内围",
+        "score": 6,
+        "max": 10,
+        "bias": "分化",
+        "detail": "量能2.5万亿较昨日2.93万亿缩15%；主力资金继续流入半导体但获利盘涌现；周五效应显现"
+      },
+      "style": {
+        "name": "风格",
+        "score": 7,
+        "max": 10,
+        "bias": "科技成长",
+        "detail": "科技成长持续领跑，双创强于主板；业绩预喜板块（工业富联+100%）催化；价值蓝筹继续落后"
+      }
+    },
+    "summary": {
+      "avg_score": 7.0,
+      "beating_index": 30.0,
+      "stage": "修复期",
+      "stage_desc": "科技板块持续修复，但分化加剧，市场进入结构性行情"
+    },
+    "prediction_verify": {
+      "source": "SIG-20260709 P4",
+      "content": "震荡分化，关注半导体持续性；上证4036点压力需消化",
+      "actual": "7/10上证+0.35%突破4036点，科创50+2.5%继续强势，分化明显，预测验证正确",
+      "result": "correct"
+    },
+    "model_learning": {
+      "lessons": [
+        "暴涨次日分化规律有效：7/9全面大涨后7/10分化，科技持续价值落后",
+        "科创50领先性再次确认：连续4日跑赢主板，成为市场风向标",
+        "业绩催化效应显著：工业富联预增100%带动算力板块",
+        "周五效应与获利回吐需要纳入短期模型"
+      ],
+      "weight_adjustments": {
+        "next_day_pattern": "+1.0（暴涨次日分化规律再次验证）",
+        "leading_index": "+0.5（科创50连续4日领先，权重继续提升）",
+        "earnings_catalyst": "+0.8（业绩超预期对科技板块催化明显，新增权重）",
+        "friday_effect": "+0.3（周五效应需纳入短期模型）"
+      }
+    },
+    "next_day_prediction": {
+      "direction": "震荡整理",
+      "confidence": 50,
+      "reason": "周末效应+中东局势不确定性，市场或谨慎；科技板块需消化获利盘，关注周一能否延续"
+    },
+    "sector_heat": {
+      "半导体": 4,
+      "AI算力": 7,
+      "新能源": 8,
+      "消费": 6,
+      "金融": 9,
+      "医药": 9,
+      "军工": 10,
+      "周期": 10
+    },
+    "capital_flow": {
+      "inflow": [
+        {
+          "name": "半导体",
+          "amount": 68.2
+        },
+        {
+          "name": "先进封装",
+          "amount": 32.5
+        },
+        {
+          "name": "工业富联",
+          "amount": 28.3
+        }
+      ],
+      "outflow": [
+        {
+          "name": "白酒",
+          "amount": -18.5
+        },
+        {
+          "name": "银行",
+          "amount": -12.3
+        },
+        {
+          "name": "新能源",
+          "amount": -8.7
+        }
+      ]
+    },
+    "stock_picks": [
+      {
+        "code": "000100.SZ",
+        "name": "TCL科技",
+        "signal": "关注",
+        "score": 5.5,
+        "reason": "分化行情，需等待个股独立逻辑"
+      },
+      {
+        "code": "688981.SH",
+        "name": "中芯国际",
+        "signal": "看多",
+        "score": 7.5,
+        "reason": "半导体持续强势，龙头地位巩固"
+      },
+      {
+        "code": "601138.SH",
+        "name": "工业富联",
+        "signal": "看多",
+        "score": 7.0,
+        "reason": "业绩催化持续，获利盘需消化"
+      }
+    ],
+    "weekly_review": {
+      "week_range": "2026-07-06 ~ 2026-07-10",
+      "weekly_summary": "本周A股经历暴跌→寻底→筑底→修复的完整周期。7/6暴跌后科创50率先企稳，7/9全面修复，科技板块成为主线。",
+      "key_events": [
+        "7/6 科创50暴跌-7.7%，全市场超5000只个股下跌",
+        "7/7 科创50微涨+0.27%率先止跌，上证继续寻底",
+        "7/8 科创50三连阳，资金向科技迁移",
+        "7/9 科创50暴涨+8.41%，市场全面修复",
+        "7/10 分化加剧，科技持续强势"
+      ],
+      "weekly_prediction_verify": [
+        {
+          "date": "2026-07-06",
+          "prediction": "科技板块短期承压",
+          "actual": "科创50暴跌-7.7%",
+          "result": "correct"
+        },
+        {
+          "date": "2026-07-07",
+          "prediction": "暴跌后次日技术性反弹",
+          "actual": "上证继续下跌-1.26%",
+          "result": "wrong"
+        },
+        {
+          "date": "2026-07-08",
+          "prediction": "继续筑底，分化加剧",
+          "actual": "科创50三连阳，主板续跌",
+          "result": "correct"
+        },
+        {
+          "date": "2026-07-09",
+          "prediction": "AI硬件3日内修复反弹",
+          "actual": "科创50暴涨+8.41%",
+          "result": "correct"
+        },
+        {
+          "date": "2026-07-10",
+          "prediction": "震荡分化，关注半导体",
+          "actual": "上证+0.35%突破4036，分化明显",
+          "result": "correct"
+        }
+      ],
+      "next_week_outlook": {
+        "direction": "震荡上行",
+        "confidence": 55,
+        "key_catalysts": [
+          "SK海力士ADR持续交易催化",
+          "中报业绩预喜持续",
+          "美联储政策预期"
+        ],
+        "risks": [
+          "中东局势升级",
+          "特朗普关税政策",
+          "科技获利盘回吐"
+        ],
+        "monitor_list": [
+          "科创50能否持续强势",
+          "量能能否维持在2万亿",
+          "北向资金流向"
+        ]
+      }
+    }
+  }
+];
+
+const dates = ["2026-07-06", "2026-07-07", "2026-07-08", "2026-07-09", "2026-07-10"];
+
+const fiveDimAvg = [4.8, 5.6, 4.8, 4.6, 5.2];
+
+const sectors = ["半导体", "AI算力", "新能源", "消费", "金融", "医药", "军工", "周期"];
+
+const sectorHeat = {"2026-07-06": [0, 0, 0, 1.2, 2.7, 6.2, 6.7, 9.2], "2026-07-07": [0, 1, 0.5, 4, 6.5, 5, 8.5, 8], "2026-07-08": [1.3, 1.8, 3.3, 2.8, 7.3, 9.8, 9.3, 10], "2026-07-09": [3.5, 6, 7.5, 6, 9.5, 9, 10, 10], "2026-07-10": [4, 7, 8, 6, 9, 9, 10, 10]};
+
+const fiveDimHistory = {"2026-07-06": [2, 2, 3, 2, 2], "2026-07-07": [3, 5, 4, 3, 5], "2026-07-08": [5, 5, 4, 5, 5], "2026-07-09": [7, 8, 6, 7, 7], "2026-07-10": [7, 8, 7, 6, 7]};
+
+const capitalFlowHistory = {"2026-07-06": {"inflow": [{"name": "黄金", "amount": 28.5}, {"name": "超硬材料", "amount": 12.3}, {"name": "银行", "amount": 8.7}], "outflow": [{"name": "半导体", "amount": -156.2}, {"name": "AI算力", "amount": -98.5}, {"name": "消费电子", "amount": -67.3}]}, "2026-07-07": {"inflow": [{"name": "半导体", "amount": 15.2}, {"name": "科创50ETF", "amount": 8.6}, {"name": "黄金", "amount": 5.3}], "outflow": [{"name": "银行", "amount": -32.1}, {"name": "地产", "amount": -18.5}, {"name": "保险", "amount": -12.7}]}, "2026-07-08": {"inflow": [{"name": "半导体", "amount": 42.8}, {"name": "AI算力", "amount": 28.5}, {"name": "先进封装", "amount": 18.3}], "outflow": [{"name": "银行", "amount": -28.6}, {"name": "白酒", "amount": -15.2}, {"name": "地产", "amount": -11.8}]}, "2026-07-09": {"inflow": [{"name": "半导体", "amount": 128.5}, {"name": "AI算力", "amount": 86.3}, {"name": "中芯国际", "amount": 45.2}, {"name": "先进封装", "amount": 38.7}], "outflow": [{"name": "银行", "amount": -22.1}, {"name": "白酒", "amount": -8.5}, {"name": "保险", "amount": -6.3}]}, "2026-07-10": {"inflow": [{"name": "半导体", "amount": 68.2}, {"name": "先进封装", "amount": 32.5}, {"name": "工业富联", "amount": 28.3}], "outflow": [{"name": "白酒", "amount": -18.5}, {"name": "银行", "amount": -12.3}, {"name": "新能源", "amount": -8.7}]}};
+
+const stockPicksHistory = {"2026-07-06": [{"code": "000100.SZ", "name": "TCL科技", "signal": "观望", "score": 3.5, "reason": "主升浪后洗盘，等待缩量止跌信号"}, {"code": "688981.SH", "name": "中芯国际", "signal": "回避", "score": 2.0, "reason": "半导体板块暴跌，短期回避"}, {"code": "601899.SH", "name": "紫金矿业", "signal": "关注", "score": 6.5, "reason": "黄金避险属性，资金流入"}], "2026-07-07": [{"code": "000100.SZ", "name": "TCL科技", "signal": "观望", "score": 4.0, "reason": "洗盘持续，量能未缩至地量"}, {"code": "688981.SH", "name": "中芯国际", "signal": "关注", "score": 5.0, "reason": "科创50止跌，半导体或有修复"}, {"code": "688012.SH", "name": "中微公司", "signal": "关注", "score": 5.5, "reason": "科技板块先行企稳信号"}], "2026-07-08": [{"code": "000100.SZ", "name": "TCL科技", "signal": "关注", "score": 5.0, "reason": "洗盘进入尾声，关注量能变化"}, {"code": "688981.SH", "name": "中芯国际", "signal": "看多", "score": 7.0, "reason": "科创50三连阳，半导体资金持续流入"}, {"code": "002371.SZ", "name": "北方华创", "signal": "看多", "score": 6.5, "reason": "半导体设备龙头，资金净流入"}], "2026-07-09": [{"code": "000100.SZ", "name": "TCL科技", "signal": "看多", "score": 6.5, "reason": "市场情绪全面修复，科技股普涨"}, {"code": "688981.SH", "name": "中芯国际", "signal": "强烈看多", "score": 8.5, "reason": "暴涨14%，半导体情绪全面爆发"}, {"code": "601138.SH", "name": "工业富联", "signal": "强烈看多", "score": 8.0, "reason": "业绩预增100%，算力板块龙头"}], "2026-07-10": [{"code": "000100.SZ", "name": "TCL科技", "signal": "关注", "score": 5.5, "reason": "分化行情，需等待个股独立逻辑"}, {"code": "688981.SH", "name": "中芯国际", "signal": "看多", "score": 7.5, "reason": "半导体持续强势，龙头地位巩固"}, {"code": "601138.SH", "name": "工业富联", "signal": "看多", "score": 7.0, "reason": "业绩催化持续，获利盘需消化"}]};
+
+const weeklyReviews = {"2026-07-10": {"week_range": "2026-07-06 ~ 2026-07-10", "weekly_summary": "本周A股经历暴跌→寻底→筑底→修复的完整周期。7/6暴跌后科创50率先企稳，7/9全面修复，科技板块成为主线。", "key_events": ["7/6 科创50暴跌-7.7%，全市场超5000只个股下跌", "7/7 科创50微涨+0.27%率先止跌，上证继续寻底", "7/8 科创50三连阳，资金向科技迁移", "7/9 科创50暴涨+8.41%，市场全面修复", "7/10 分化加剧，科技持续强势"], "weekly_prediction_verify": [{"date": "2026-07-06", "prediction": "科技板块短期承压", "actual": "科创50暴跌-7.7%", "result": "correct"}, {"date": "2026-07-07", "prediction": "暴跌后次日技术性反弹", "actual": "上证继续下跌-1.26%", "result": "wrong"}, {"date": "2026-07-08", "prediction": "继续筑底，分化加剧", "actual": "科创50三连阳，主板续跌", "result": "correct"}, {"date": "2026-07-09", "prediction": "AI硬件3日内修复反弹", "actual": "科创50暴涨+8.41%", "result": "correct"}, {"date": "2026-07-10", "prediction": "震荡分化，关注半导体", "actual": "上证+0.35%突破4036，分化明显", "result": "correct"}], "next_week_outlook": {"direction": "震荡上行", "confidence": 55, "key_catalysts": ["SK海力士ADR持续交易催化", "中报业绩预喜持续", "美联储政策预期"], "risks": ["中东局势升级", "特朗普关税政策", "科技获利盘回吐"], "monitor_list": ["科创50能否持续强势", "量能能否维持在2万亿", "北向资金流向"]}}};
+
+const dimNames = ["宏观", "微观", "外围", "内围", "风格"];
+
+const dimKeys = ["macro", "micro", "peripheral", "internal", "style"];
+
+const colorPalette = ["#3b82f6","#10b981","#f59e0b","#ef4444","#8b5cf6","#ec4899","#06b6d4","#f97316"];
+
+</script>
+<script>
+let currentDate = dates[dates.length - 1];
+let currentData = dataAll[dataAll.length - 1];
+
+function getDataByDate(date) {
+  const idx = dates.indexOf(date);
+  return idx >= 0 ? dataAll[idx] : dataAll[3];
+}
+
+function getPrevData(date) {
+  const idx = dates.indexOf(date);
+  return idx > 0 ? dataAll[idx-1] : null;
+}
+
+const tabBtns = document.querySelectorAll('.tab-btn');
+const tabPanels = document.querySelectorAll('.tab-panel');
+tabBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    tabBtns.forEach(b => b.classList.remove('active'));
+    tabPanels.forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+    setTimeout(() => {
+      if(btn.dataset.tab === 'overview') { initRadar(); renderOverview(); }
+      if(btn.dataset.tab === 'verify') { initVerifyChart(); initAccuracyTrend(); }
+      if(btn.dataset.tab === 'strategy') { initStrategyChart(); }
+      if(btn.dataset.tab === 'history') { initBeatingChart(); initSectorHeat(); initFiveDimTrend(); initSentimentChart(); }
+      if(btn.dataset.tab === 'capital') { initCapitalChart(); renderCapital(); }
+      if(btn.dataset.tab === 'stocks') { initStocksChart(); renderStocks(); }
+      if(btn.dataset.tab === 'weekly') { renderWeekly(); }
+      if(btn.dataset.tab === 'model') { initAccuracyPie(); initDimCompare(); }
+      // 确保图表在容器尺寸稳定后重新计算
+      requestAnimationFrame(() => {
+        if(radarChartInst) radarChartInst.resize();
+        if(verifyChartInst) verifyChartInst.resize();
+        if(strategyChartInst) strategyChartInst.resize();
+        if(beatingChartInst) beatingChartInst.resize();
+        if(sectorHeatInst) sectorHeatInst.resize();
+        if(fiveDimTrendInst) fiveDimTrendInst.resize();
+        if(accuracyPieInst) accuracyPieInst.resize();
+      });
+    }, 300);
+  });
+});
+
+document.getElementById('dateSelect').addEventListener('change', e => {
+  currentDate = e.target.value;
+  currentData = getDataByDate(currentDate);
+  renderOverview();
+  renderEngine();
+  renderVerify();
+  renderStrategy();
+  renderCapital();
+  renderStocks();
+  renderWeekly();
+  renderModel();
+  initRadar();
+});
+
+function renderOverview() {
+  const s = currentData.summary;
+  const prev = getPrevData(currentDate);
+  document.getElementById('kpi-score').textContent = s.avg_score;
+  document.getElementById('kpi-beating').textContent = s.beating_index + '%';
+  document.getElementById('kpi-stage').textContent = s.stage;
+  document.getElementById('kpi-stage-desc').textContent = s.stage_desc;
+  const deltaScore = prev ? (s.avg_score - prev.summary.avg_score).toFixed(1) : '0';
+  const deltaBeating = prev ? (s.beating_index - prev.summary.beating_index).toFixed(0) : '0';
+  const sdEl = document.getElementById('kpi-score-delta');
+  sdEl.textContent = prev ? `较昨日 ${deltaScore > 0 ? '+' : ''}${deltaScore}` : '首日';
+  sdEl.className = 'kpi-delta ' + (deltaScore > 0 ? 'positive' : deltaScore < 0 ? 'negative' : 'neutral');
+  const bdEl = document.getElementById('kpi-beating-delta');
+  bdEl.textContent = prev ? `较昨日 ${deltaBeating > 0 ? '+' : ''}${deltaBeating}%` : '首日';
+  bdEl.className = 'kpi-delta ' + (deltaBeating < 0 ? 'positive' : deltaBeating > 0 ? 'negative' : 'neutral');
+
+  const bars = document.getElementById('fiveDimBars');
+  bars.innerHTML = '';
+  dimKeys.forEach((k, i) => {
+    const d = currentData.five_dimensions[k];
+    const pct = (d.score / d.max * 100).toFixed(0);
+    const colors = ["#3b82f6","#10b981","#f59e0b","#ef4444","#8b5cf6"];
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    row.innerHTML = `<div class="bar-label">${d.name}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${colors[i]}"></div>
+      <div class="bar-val">${d.score}/${d.max}</div></div>`;
+    bars.appendChild(row);
+  });
+
+  const core = document.getElementById('coreVariables');
+  core.innerHTML = '<ul class="monitor-list">' +
+    currentData.market_variables_top3.map(v => `<li>${v}</li>`).join('') + '</ul>';
+  
+  // 更新准确率KPI
+  let correct = 0, partial = 0, wrong = 0;
+  dataAll.forEach(d => {
+    const r = d.prediction_verify.result;
+    if (r === 'correct') correct++;
+    else if (r === 'partial') partial++;
+    else if (r === 'wrong') wrong++;
+  });
+  const total = correct + partial + wrong;
+  const accuracy = total > 0 ? Math.round((correct + partial * 0.5) / total * 100) : 0;
+  document.getElementById('kpi-accuracy').textContent = accuracy + '%';
+  document.getElementById('kpi-accuracy-detail').textContent = `${correct}正确 / ${partial}部分 / ${wrong}错误`;
+  
+  // 阶段转换时间线
+  const timeline = document.getElementById('stageTimeline');
+  timeline.innerHTML = '';
+  const stages = ['暴跌期', '寻底期', '筑底期', '修复期'];
+  const stageColors = {'暴跌期': '#ef4444', '寻底期': '#f59e0b', '筑底期': '#8b5cf6', '修复期': '#10b981'};
+  const stageIdx = stages.indexOf(s.stage);
+  stages.forEach((st, i) => {
+    const div = document.createElement('div');
+    div.style.cssText = `display:inline-flex;align-items:center;gap:8px;padding:10px 18px;margin:4px;border-radius:8px;font-size:14px;font-weight:500;transition:all 0.3s;`;
+    if (i === stageIdx) {
+      div.style.background = `rgba(${stageColors[st].slice(1).match(/.{2}/g).map(h=>parseInt(h,16)).join(',')},0.2)`;
+      div.style.color = stageColors[st];
+      div.style.border = `1px solid ${stageColors[st]}`;
+      div.innerHTML = `<span style="font-size:18px">●</span> ${st} (当前)`;
+    } else if (i < stageIdx) {
+      div.style.background = 'rgba(30,41,59,0.5)';
+      div.style.color = '#64748b';
+      div.style.border = '1px solid var(--border)';
+      div.innerHTML = `<span style="font-size:18px;color:#10b981">✓</span> ${st}`;
+    } else {
+      div.style.background = 'rgba(30,41,59,0.3)';
+      div.style.color = '#475569';
+      div.style.border = '1px solid var(--border)';
+      div.innerHTML = `<span style="font-size:18px">○</span> ${st}`;
+    }
+    timeline.appendChild(div);
+  });
+  
+  // 市场温度计
+  const thermo = document.getElementById('thermometerBars');
+  thermo.innerHTML = '';
+  const thermoItems = [
+    {label: '恐慌/贪婪', score: currentData.summary.avg_score, max: 10, colors: ['#ef4444','#f59e0b','#10b981']},
+    {label: '承压程度', score: currentData.summary.beating_index/10, max: 10, colors: ['#10b981','#f59e0b','#ef4444']},
+    {label: '科技热度', score: currentData.five_dimensions.micro.score, max: 10, colors: ['#3b82f6','#8b5cf6','#ec4899']},
+    {label: '资金承接', score: currentData.five_dimensions.internal.score, max: 10, colors: ['#ef4444','#f59e0b','#10b981']}
+  ];
+  thermoItems.forEach(item => {
+    const pct = (item.score / item.max * 100).toFixed(0);
+    const color = item.score >= 7 ? item.colors[2] : item.score >= 4 ? item.colors[1] : item.colors[0];
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    row.innerHTML = `<div class="bar-label">${item.label}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div>
+      <div class="bar-val">${item.score.toFixed(1)}</div></div>`;
+    thermo.appendChild(row);
+  });
+}
+
+
+let gaugeChartInst = null;
+function initGauge() {
+  const dom = document.getElementById('gaugeChart');
+  if(!dom) return;
+  if(gaugeChartInst) { gaugeChartInst.dispose(); }
+  gaugeChartInst = echarts.init(dom);
+  const score = currentData.summary.avg_score;
+  const option = {
+    backgroundColor:'#111827', textStyle:{color:'#e2e8f0'},
+    series:[{
+      type:'gauge',
+      startAngle:180, endAngle:0,
+      min:0, max:10,
+      splitNumber:10,
+      axisLine:{lineStyle:{width:20,color:[[0.3,'#ef4444'],[0.6,'#f59e0b'],[1,'#10b981']]}},
+      pointer:{length:'55%',width:6},
+      axisTick:{distance:-20,length:8,lineStyle:{color:'#fff'}},
+      splitLine:{distance:-20,length:20,lineStyle:{color:'#fff'}},
+      axisLabel:{distance:-15,color:'#e2e8f0',fontSize:12},
+      detail:{valueAnimation:true,formatter:'{value}',color:'#e2e8f0',fontSize:28,fontWeight:'bold',offsetCenter:[0,'60%']},
+      data:[{value:score, name:'五维评分'}]
+    }]
+  };
+  gaugeChartInst.setOption(option);
+}
+
+function initThermometer() {
+  // 温度计在renderOverview中渲染，此函数为占位
+}
+
+let radarChartInst = null;
+function initRadar() {
+  const dom = document.getElementById('radarChart');
+  if(!dom) return;
+  if(radarChartInst) { radarChartInst.dispose(); }
+  radarChartInst = echarts.init(dom);
+  const d = currentData.five_dimensions;
+  const vals = dimKeys.map(k => d[k].score);
+  const option = {
+    backgroundColor:'#111827',
+    textStyle:{color:'#e2e8f0'},
+    tooltip:{trigger:'item'},
+    radar:{
+      indicator:dimNames.map((n,i) => ({name:n, max:10})),
+      axisName:{color:'#e2e8f0'},
+      splitArea:{areaStyle:{color:['rgba(30,41,59,.5)','rgba(17,24,39,.8)']}},
+      axisLine:{lineStyle:{color:'#334155'}},
+      splitLine:{lineStyle:{color:'#334155'}}
+    },
+    series:[{
+      type:'radar',
+      data:[{
+        value:vals,
+        name:currentDate,
+        areaStyle:{color:'rgba(59,130,246,.25)'},
+        lineStyle:{color:'#3b82f6',width:2},
+        itemStyle:{color:'#3b82f6'}
+      }]
+    }]
+  };
+  radarChartInst.setOption(option);
+}
+
+function renderEngine() {
+  // 1. 五维评分推导总览
+  const ov = document.getElementById('engineOverview');
+  ov.innerHTML = '';
+  dimKeys.forEach(k => {
+    const d = currentData.five_dimensions[k];
+    const pct = (d.score / d.max * 100).toFixed(0);
+    const scoreClass = d.score >= 7 ? 'score-high' : d.score >= 4 ? 'score-mid' : 'score-low';
+    const row = document.createElement('div');
+    row.className = 'derivation-path';
+    row.innerHTML = `
+      <span class="score-badge ${scoreClass}">${d.score}</span>
+      <span style="font-weight:600;min-width:60px">${d.name}</span>
+      <span class="derivation-arrow">→</span>
+      <span style="color:var(--muted)">${d.bias}</span>
+      <span class="derivation-arrow">→</span>
+      <span style="flex:1">${d.detail}</span>
+    `;
+    ov.appendChild(row);
+  });
+
+  // 2. 逐维度深度推导
+  const deep = document.getElementById('engineDeep');
+  deep.innerHTML = '';
+  dimKeys.forEach(k => {
+    const d = currentData.five_dimensions[k];
+    const box = document.createElement('div');
+    box.className = 'factor-item';
+    const scoreClass = d.score >= 7 ? 'score-high' : d.score >= 4 ? 'score-mid' : 'score-low';
+    box.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="factor-title">${d.name}</div>
+        <span class="score-badge ${scoreClass}">${d.score}</span>
+      </div>
+      <div class="factor-desc">${d.detail}</div>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+        <span class="weight-chip">偏向: ${d.bias}</span>
+        <span class="weight-chip">满分: ${d.max}</span>
+        <span class="weight-chip">得分率: ${(d.score/d.max*100).toFixed(0)}%</span>
+      </div>
+    `;
+    deep.appendChild(box);
+  });
+  deep.className = 'factor-grid';
+
+  // 3. 核心变量→评分映射链
+  const mapping = document.getElementById('engineMapping');
+  mapping.innerHTML = '';
+  currentData.market_variables_top3.forEach((v, i) => {
+    const map = document.createElement('div');
+    map.className = 'derivation-path';
+    map.innerHTML = `
+      <span style="background:var(--accent);color:#fff;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:600">变量${i+1}</span>
+      <span style="flex:1">${v}</span>
+      <span class="derivation-arrow">→</span>
+      <span style="color:var(--muted)">影响维度</span>
+    `;
+    mapping.appendChild(map);
+  });
+  // 添加映射说明
+  const mapNote = document.createElement('div');
+  mapNote.style.cssText = 'margin-top:12px;padding:12px;background:rgba(59,130,246,0.06);border-radius:8px;font-size:13px;color:#94a3b8;line-height:1.7';
+  mapNote.innerHTML = '映射逻辑：核心变量通过传导链影响各维度评分。例如"科创50暴涨"→微观评分↑→科技成长风格↑→整体五维评分↑。每个变量的权重根据其历史验证准确率动态调整。';
+  mapping.appendChild(mapNote);
+
+  // 4. 预测推演路径
+  const pred = document.getElementById('enginePrediction');
+  pred.innerHTML = '';
+  const nd = currentData.next_day_prediction;
+  const predPath = document.createElement('div');
+  predPath.className = 'derivation-path';
+  predPath.style.cssText = 'background:linear-gradient(145deg, rgba(59,130,246,0.1), rgba(17,24,39,0.8));border:1px solid rgba(59,130,246,0.2);padding:14px 18px;';
+  predPath.innerHTML = `
+    <span style="font-weight:700;color:var(--accent)">当前状态</span>
+    <span class="derivation-arrow">→</span>
+    <span>五维评分 ${currentData.summary.avg_score}</span>
+    <span class="derivation-arrow">→</span>
+    <span>挨打指数 ${currentData.summary.beating_index}%</span>
+    <span class="derivation-arrow">→</span>
+    <span style="font-weight:700">${nd.direction}</span>
+    <span style="color:var(--muted);margin-left:auto">(置信度 ${nd.confidence}%)</span>
+  `;
+  pred.appendChild(predPath);
+  const predReason = document.createElement('div');
+  predReason.style.cssText = 'margin-top:10px;font-size:13px;color:#94a3b8;line-height:1.7';
+  predReason.textContent = nd.reason;
+  pred.appendChild(predReason);
+
+  // 5. 模型权重调整历史
+  const wh = document.getElementById('engineWeights');
+  wh.innerHTML = '';
+  if (currentData.model_learning && currentData.model_learning.weight_adjustments) {
+    const wa = currentData.model_learning.weight_adjustments;
+    Object.entries(wa).forEach(([k, v]) => {
+      const chip = document.createElement('span');
+      chip.className = 'weight-chip';
+      chip.style.margin = '4px';
+      chip.textContent = `${k}: ${v}`;
+      wh.appendChild(chip);
+    });
+  }
+  const lessons = document.createElement('div');
+  lessons.style.cssText = 'margin-top:14px;font-size:13px;color:#94a3b8;line-height:1.7';
+  if (currentData.model_learning && currentData.model_learning.lessons) {
+    lessons.innerHTML = '<strong style="color:var(--text)">学习记录：</strong><br>' + currentData.model_learning.lessons.join('<br>');
+  }
+  wh.appendChild(lessons);
+}
+
+function renderVerify() {
+  const tbody = document.querySelector('#verifyTable tbody');
+  tbody.innerHTML = '';
+  dataAll.forEach(d => {
+    const pv = d.prediction_verify;
+    const tagCls = pv.result === 'correct' ? 'tag-correct' : pv.result === 'partial' ? 'tag-partial' : 'tag-wrong';
+    const tagText = pv.result === 'correct' ? '正确' : pv.result === 'partial' ? '部分' : '错误';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${d.meta.date}</td><td>${pv.content}</td><td>-</td><td>${pv.actual}</td><td><span class="tag ${tagCls}">${tagText}</span></td>`;
+    tbody.appendChild(tr);
+  });
+  const ml = document.getElementById('modelLearning');
+  ml.innerHTML = '';
+  dataAll.forEach(d => {
+    const box = document.createElement('div');
+    box.style.cssText = 'margin-bottom:12px;padding:12px;border:1px solid var(--border);border-radius:8px;';
+    const wa = d.model_learning.weight_adjustments;
+    const waStr = Object.entries(wa).map(([k,v]) => `${k}: ${v}`).join('<br>');
+    box.innerHTML = `<strong>${d.meta.date}</strong><br>${d.model_learning.lessons.join('<br>')}<br><em style="color:#94a3b8">权重: ${waStr}</em>`;
+    ml.appendChild(box);
+  });
+}
+
+let verifyChartInst = null;
+function initVerifyChart() {
+  const dom = document.getElementById('verifyChart');
+  if(!dom) return;
+  if(verifyChartInst) { verifyChartInst.dispose(); }
+  verifyChartInst = echarts.init(dom);
+  const results = {correct:0, partial:0, wrong:0};
+  dataAll.forEach(d => { if(d.prediction_verify.result) results[d.prediction_verify.result]++; });
+  const option = {
+    backgroundColor:'#111827', textStyle:{color:'#e2e8f0'},
+    tooltip:{trigger:'item'},
+    legend:{bottom:10, textStyle:{color:'#e2e8f0'}},
+    series:[{
+      type:'pie', radius:['45%','70%'], center:['50%','45%'],
+      data:[
+        {value:results.correct, name:'正确', itemStyle:{color:'#10b981'}},
+        {value:results.partial, name:'部分', itemStyle:{color:'#f59e0b'}},
+        {value:results.wrong, name:'错误', itemStyle:{color:'#ef4444'}}
+      ],
+      label:{color:'#e2e8f0',formatter:'{b}: {c} ({d}%)'}
+    }]
+  };
+  verifyChartInst.setOption(option);
+}
+
+function renderStrategy() {
+  const nd = currentData.next_day_prediction;
+  const dir = document.getElementById('strategyDirection');
+  dir.innerHTML = `<div style="font-size:24px;font-weight:700;color:var(--accent)">${nd.direction}</div>`;
+  
+  const badge = document.getElementById('strategyConfidenceBadge');
+  if (badge) {
+    badge.textContent = `置信度 ${nd.confidence}%`;
+    if (nd.confidence >= 60) badge.style.cssText = 'background:rgba(16,185,129,0.2);color:#34d399';
+    else if (nd.confidence >= 45) badge.style.cssText = 'background:rgba(245,158,11,0.2);color:#fbbf24';
+    else badge.style.cssText = 'background:rgba(239,68,68,0.2);color:#f87171';
+  }
+  
+  const reason = document.getElementById('strategyReason');
+  if (reason) reason.textContent = nd.reason;
+  
+  // 关键假设
+  const assumptions = document.getElementById('strategyAssumptions');
+  if (assumptions) {
+    assumptions.innerHTML = '';
+    const assumptions_data = [
+      '外围市场不出现重大利空',
+      '量能维持在2万亿以上',
+      '北向资金不大幅流出',
+      '政策面无突发变化'
+    ];
+    assumptions_data.forEach(a => {
+      const div = document.createElement('div');
+      div.className = 'derivation-path';
+      div.innerHTML = `<span style="color:var(--accent)">✓</span> ${a}`;
+      assumptions.appendChild(div);
+    });
+  }
+  
+  const ml = document.getElementById('monitorList');
+  ml.innerHTML = '';
+  currentData.market_variables_top3.forEach((v, i) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span style="background:var(--accent);color:#fff;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:600;margin-right:8px">TOP${i+1}</span>${v}`;
+    ml.appendChild(li);
+  });
+  
+  // 风险警示
+  const risks = document.getElementById('strategyRisks');
+  if (risks) {
+    risks.innerHTML = '';
+    const risk_data = [
+      {level: '高', text: '中东局势升级可能影响全球风险偏好'},
+      {level: '中', text: '特朗普关税政策不确定性'},
+      {level: '中', text: '科技板块获利盘回吐压力'},
+      {level: '低', text: '周末消息面真空期波动'}
+    ];
+    risk_data.forEach(r => {
+      const color = r.level === '高' ? '#ef4444' : r.level === '中' ? '#f59e0b' : '#10b981';
+      const div = document.createElement('div');
+      div.className = 'derivation-path';
+      div.innerHTML = `<span style="color:${color};font-weight:700">${r.level}</span> <span style="flex:1">${r.text}</span>`;
+      risks.appendChild(div);
+    });
+  }
+}
+
+let strategyChartInst = null;
+function initStrategyChart() {
+  const dom = document.getElementById('strategyChart');
+  if(!dom) return;
+  if(strategyChartInst) { strategyChartInst.dispose(); }
+  strategyChartInst = echarts.init(dom);
+  const option = {
+    backgroundColor:'#111827', textStyle:{color:'#e2e8f0'},
+    tooltip:{trigger:'item'},
+    series:[{
+      type:'graph', layout:'none', symbolSize:60, roam:false,
+      label:{show:true, color:'#e2e8f0', fontSize:12},
+      edgeSymbol:['circle','arrow'], edgeSymbolSize:[4,10],
+      lineStyle:{color:'#334155', width:2},
+      data:[
+        {name:'当前', x:400, y:100, itemStyle:{color:'#3b82f6'}},
+        {name:'科技修复', x:250, y:220, itemStyle:{color:'#10b981'}},
+        {name:'震荡分化', x:550, y:220, itemStyle:{color:'#f59e0b'}},
+        {name:'继续冲高', x:180, y:340, itemStyle:{color:'#8b5cf6'}},
+        {name:'回落整理', x:320, y:340, itemStyle:{color:'#ec4899'}},
+        {name:'主板补涨', x:480, y:340, itemStyle:{color:'#06b6d4'}},
+        {name:'全面回调', x:620, y:340, itemStyle:{color:'#ef4444'}}
+      ],
+      links:[
+        {source:'当前', target:'科技修复'},
+        {source:'当前', target:'震荡分化'},
+        {source:'科技修复', target:'继续冲高'},
+        {source:'科技修复', target:'回落整理'},
+        {source:'震荡分化', target:'主板补涨'},
+        {source:'震荡分化', target:'全面回调'}
+      ]
+    }]
+  };
+  strategyChartInst.setOption(option);
+}
+
+let beatingChartInst = null;
+function initBeatingChart() {
+  const dom = document.getElementById('beatingChart');
+  if(!dom) return;
+  if(beatingChartInst) { beatingChartInst.dispose(); }
+  beatingChartInst = echarts.init(dom);
+  const scores = dates.map(d => dataAll[dates.indexOf(d)].summary.avg_score);
+  const beatings = dates.map(d => dataAll[dates.indexOf(d)].summary.beating_index);
+  const option = {
+    backgroundColor:'#111827', textStyle:{color:'#e2e8f0'},
+    tooltip:{trigger:'axis'},
+    legend:{data:['五维平均分','挨打指数'], textStyle:{color:'#e2e8f0'}},
+    xAxis:{type:'category', data:dates, axisLine:{lineStyle:{color:'#334155'}}, axisLabel:{color:'#e2e8f0'}},
+    yAxis:{type:'value', axisLine:{lineStyle:{color:'#334155'}}, axisLabel:{color:'#e2e8f0'}, splitLine:{lineStyle:{color:'#1e293b'}}},
+    series:[
+      {type:'line', name:'五维平均分', data:scores, smooth:true, lineStyle:{color:'#3b82f6'}, itemStyle:{color:'#3b82f6'}, areaStyle:{color:'rgba(59,130,246,.15)'}},
+      {type:'line', name:'挨打指数', data:beatings, smooth:true, lineStyle:{color:'#ef4444'}, itemStyle:{color:'#ef4444'}}
+    ]
+  };
+  beatingChartInst.setOption(option);
+}
+
+let sectorHeatInst = null;
+function initSectorHeat() {
+  const dom = document.getElementById('sectorHeatChart');
+  if(!dom) return;
+  if(sectorHeatInst) { sectorHeatInst.dispose(); }
+  sectorHeatInst = echarts.init(dom);
+  const series = sectors.map((s, i) => ({
+    name:s, type:'bar', stack:'total',
+    data: dates.map(d => sectorHeat[d][i]),
+    itemStyle:{color:colorPalette[i]}
+  }));
+  const option = {
+    backgroundColor:'#111827', textStyle:{color:'#e2e8f0'},
+    tooltip:{trigger:'axis', axisPointer:{type:'shadow'}},
+    legend:{data:sectors, textStyle:{color:'#e2e8f0'}},
+    xAxis:{type:'category', data:dates, axisLine:{lineStyle:{color:'#334155'}}, axisLabel:{color:'#e2e8f0'}},
+    yAxis:{type:'value', name:'热度', axisLine:{lineStyle:{color:'#334155'}}, axisLabel:{color:'#e2e8f0'}, splitLine:{lineStyle:{color:'#1e293b'}}},
+    series:series
+  };
+  sectorHeatInst.setOption(option);
+}
+
+
+let accuracyTrendInst = null;
+function initAccuracyTrend() {
+  const dom = document.getElementById('accuracyTrendChart');
+  if(!dom) return;
+  if(accuracyTrendInst) { accuracyTrendInst.dispose(); }
+  accuracyTrendInst = echarts.init(dom);
+  let correct = 0; let total = 0;
+  const trendData = dataAll.map(d => {
+    if (d.prediction_verify.result === 'correct') correct++;
+    if (d.prediction_verify.result === 'partial') correct += 0.5;
+    total++;
+    return { date: d.meta.date, value: Math.round(correct / total * 100) };
+  });
+  const option = {
+    backgroundColor:'#111827', textStyle:{color:'#e2e8f0'},
+    tooltip:{trigger:'axis'},
+    xAxis:{type:'category', data:trendData.map(d=>d.date), axisLine:{lineStyle:{color:'#334155'}}, axisLabel:{color:'#e2e8f0'}},
+    yAxis:{type:'value', min:0, max:100, axisLine:{lineStyle:{color:'#334155'}}, axisLabel:{color:'#e2e8f0',formatter:'{value}%'}, splitLine:{lineStyle:{color:'#1e293b'}}},
+    series:[{
+      type:'line', data:trendData.map(d=>d.value), smooth:true, lineStyle:{color:'#10b981',width:2}, 
+      itemStyle:{color:'#10b981'}, areaStyle:{color:'rgba(16,185,129,.15)'},
+      markLine:{data:[{yAxis:60,lineStyle:{color:'#f59e0b'},label:{formatter:'及格线 60%',color:'#f59e0b'}}]}
+    }]
+  };
+  accuracyTrendInst.setOption(option);
+}
+
+let sentimentInst = null;
+function initSentimentChart() {
+  const dom = document.getElementById('sentimentChart');
+  if(!dom) return;
+  if(sentimentInst) { sentimentInst.dispose(); }
+  sentimentInst = echarts.init(dom);
+  const scores = dates.map(d => dataAll[dates.indexOf(d)].summary.avg_score);
+  const beatings = dates.map(d => dataAll[dates.indexOf(d)].summary.beating_index);
+  const sentiment = scores.map((s, i) => Math.round(s * 10 - beatings[i] / 10));
+  const option = {
+    backgroundColor:'#111827', textStyle:{color:'#e2e8f0'},
+    tooltip:{trigger:'axis'},
+    legend:{data:['市场情绪指数'], textStyle:{color:'#e2e8f0'}},
+    xAxis:{type:'category', data:dates, axisLine:{lineStyle:{color:'#334155'}}, axisLabel:{color:'#e2e8f0'}},
+    yAxis:{type:'value', min:-50, max:50, axisLine:{lineStyle:{color:'#334155'}}, axisLabel:{color:'#e2e8f0'}, splitLine:{lineStyle:{color:'#1e293b'}}},
+    series:[{
+      type:'line', name:'市场情绪指数', data:sentiment, smooth:true, lineStyle:{color:'#8b5cf6',width:2},
+      itemStyle:{color:'#8b5cf6'}, areaStyle:{color:'rgba(139,92,246,.15)'},
+      markLine:{data:[{yAxis:0,lineStyle:{color:'#94a3b8'},label:{formatter:'中性线',color:'#94a3b8'}}]}
+    }]
+  };
+  sentimentInst.setOption(option);
+}
+
+let fiveDimTrendInst = null;
+function initFiveDimTrend() {
+  const dom = document.getElementById('fiveDimTrendChart');
+  if(!dom) return;
+  if(fiveDimTrendInst) { fiveDimTrendInst.dispose(); }
+  fiveDimTrendInst = echarts.init(dom);
+  const series = dimNames.map((n, i) => ({
+    name:n, type:'line', smooth:true,
+    data: dates.map(d => fiveDimHistory[d][i]),
+    itemStyle:{color:colorPalette[i]}, lineStyle:{width:2}
+  }));
+  const avgSeries = {
+    name:'历史均值', type:'line', data:fiveDimAvg, lineStyle:{type:'dashed',color:'#94a3b8'}, itemStyle:{color:'#94a3b8'}, symbol:'none'
+  };
+  const option = {
+    backgroundColor:'#111827', textStyle:{color:'#e2e8f0'},
+    tooltip:{trigger:'axis'},
+    legend:{data:[...dimNames,'历史均值'], textStyle:{color:'#e2e8f0'}},
+    xAxis:{type:'category', data:dates, axisLine:{lineStyle:{color:'#334155'}}, axisLabel:{color:'#e2e8f0'}},
+    yAxis:{type:'value', min:0, max:10, axisLine:{lineStyle:{color:'#334155'}}, axisLabel:{color:'#e2e8f0'}, splitLine:{lineStyle:{color:'#1e293b'}}},
+    series:[...series, avgSeries]
+  };
+  fiveDimTrendInst.setOption(option);
+}
+
+
+let dimCompareInst = null;
+function initDimCompare() {
+  const dom = document.getElementById('dimCompareChart');
+  if(!dom) return;
+  if(dimCompareInst) { dimCompareInst.dispose(); }
+  dimCompareInst = echarts.init(dom);
+  const currentScores = dimKeys.map(k => currentData.five_dimensions[k].score);
+  const option = {
+    backgroundColor:'#111827', textStyle:{color:'#e2e8f0'},
+    tooltip:{trigger:'axis'},
+    legend:{data:['当前评分','历史均值'], textStyle:{color:'#e2e8f0'}},
+    xAxis:{type:'category', data:dimNames, axisLine:{lineStyle:{color:'#334155'}}, axisLabel:{color:'#e2e8f0'}},
+    yAxis:{type:'value', min:0, max:10, axisLine:{lineStyle:{color:'#334155'}}, axisLabel:{color:'#e2e8f0'}, splitLine:{lineStyle:{color:'#1e293b'}}},
+    series:[
+      {type:'bar', name:'当前评分', data:currentScores, itemStyle:{color:'#3b82f6'}, barWidth:'30%'},
+      {type:'bar', name:'历史均值', data:fiveDimAvg, itemStyle:{color:'rgba(148,163,184,0.5)'}, barWidth:'30%'}
+    ]
+  };
+  dimCompareInst.setOption(option);
+}
+
+let accuracyPieInst = null;
+function initAccuracyPie() {
+  const dom = document.getElementById('accuracyPie');
+  if(!dom) return;
+  if(accuracyPieInst) { accuracyPieInst.dispose(); }
+  accuracyPieInst = echarts.init(dom);
+  const option = {
+    backgroundColor:'#111827', textStyle:{color:'#e2e8f0'},
+    tooltip:{trigger:'item'},
+    legend:{bottom:5, textStyle:{color:'#e2e8f0'}},
+    series:[{
+      type:'pie', radius:'60%', center:['50%','45%'],
+      data:[
+        {value:3, name:'正确', itemStyle:{color:'#10b981'}},
+        {value:1, name:'部分', itemStyle:{color:'#f59e0b'}},
+        {value:0, name:'错误', itemStyle:{color:'#ef4444'}}
+      ],
+      label:{color:'#e2e8f0', formatter:'{b}: {c}'}
+    }]
+  };
+  accuracyPieInst.setOption(option);
+}
+
+
+function renderCapital() {
+  const cf = capitalFlowHistory[currentDate];
+  if (!cf) return;
+  const inflow = cf.inflow || [];
+  const outflow = cf.outflow || [];
+  const netIn = inflow.reduce((s, i) => s + i.amount, 0);
+  const netOut = outflow.reduce((s, o) => s + o.amount, 0);
+  const net = netIn + netOut;
+  
+  document.getElementById('capital-net').textContent = (net > 0 ? '+' : '') + net.toFixed(1) + '亿';
+  document.getElementById('capital-net').style.color = net >= 0 ? '#34d399' : '#f87171';
+  document.getElementById('capital-net-delta').textContent = net >= 0 ? '资金净流入' : '资金净流出';
+  
+  if (inflow.length > 0) {
+    document.getElementById('capital-in1').textContent = inflow[0].name;
+    document.getElementById('capital-in1-amount').textContent = '+' + inflow[0].amount + '亿';
+    document.getElementById('capital-in1-amount').className = 'kpi-delta positive';
+  }
+  if (outflow.length > 0) {
+    document.getElementById('capital-out1').textContent = outflow[0].name;
+    document.getElementById('capital-out1-amount').textContent = outflow[0].amount + '亿';
+    document.getElementById('capital-out1-amount').className = 'kpi-delta negative';
+  }
+  
+  const sentiment = net > 50 ? '积极' : net > 0 ? '温和' : net > -50 ? '谨慎' : '恐慌';
+  const sentimentColor = net > 50 ? 'background:rgba(16,185,129,0.2);color:#34d399' : net > 0 ? 'background:rgba(245,158,11,0.2);color:#fbbf24' : 'background:rgba(239,68,68,0.2);color:#f87171';
+  const sb = document.getElementById('capital-sentiment');
+  sb.textContent = sentiment;
+  sb.style.cssText = sentimentColor;
+  document.getElementById('capital-sentiment-desc').textContent = '基于主力资金净流入判断';
+  
+  const tbody = document.querySelector('#capitalTable tbody');
+  tbody.innerHTML = '';
+  [...inflow.map(i => ({name: i.name, amount: i.amount, dir: 'in'})), ...outflow.map(o => ({name: o.name, amount: o.amount, dir: 'out'}))]
+    .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))
+    .forEach((item, idx) => {
+      const tr = document.createElement('tr');
+      const color = item.dir === 'in' ? '#34d399' : '#f87171';
+      const sign = item.dir === 'in' ? '+' : '';
+      tr.innerHTML = `<td>${item.name}</td><td style="color:${color}">${sign}${item.amount}亿</td><td>Top ${idx+1}</td><td><span class="tag ${item.dir === 'in' ? 'tag-correct' : 'tag-wrong'}">${item.dir === 'in' ? '流入' : '流出'}</span></td>`;
+      tbody.appendChild(tr);
+    });
+}
+
+let capitalInInst = null;
+let capitalOutInst = null;
+function initCapitalChart() {
+  const cf = capitalFlowHistory[currentDate];
+  if (!cf) return;
+  const inflow = cf.inflow || [];
+  const outflow = cf.outflow || [];
+  
+  const domIn = document.getElementById('capitalInChart');
+  if (domIn) {
+    if (capitalInInst) capitalInInst.dispose();
+    capitalInInst = echarts.init(domIn);
+    capitalInInst.setOption({
+      backgroundColor:'#111827', textStyle:{color:'#e2e8f0'},
+      tooltip:{trigger:'axis'},
+      xAxis:{type:'value', axisLine:{lineStyle:{color:'#334155'}}, axisLabel:{color:'#e2e8f0'}, splitLine:{lineStyle:{color:'#1e293b'}}},
+      yAxis:{type:'category', data:inflow.map(i=>i.name).reverse(), axisLine:{lineStyle:{color:'#334155'}}, axisLabel:{color:'#e2e8f0'}},
+      series:[{type:'bar', data:inflow.map(i=>i.amount).reverse(), itemStyle:{color:'#10b981'}, label:{show:true,position:'right',formatter:'+{c}亿',color:'#e2e8f0'}}]
+    });
+  }
+  
+  const domOut = document.getElementById('capitalOutChart');
+  if (domOut) {
+    if (capitalOutInst) capitalOutInst.dispose();
+    capitalOutInst = echarts.init(domOut);
+    capitalOutInst.setOption({
+      backgroundColor:'#111827', textStyle:{color:'#e2e8f0'},
+      tooltip:{trigger:'axis'},
+      xAxis:{type:'value', axisLine:{lineStyle:{color:'#334155'}}, axisLabel:{color:'#e2e8f0'}, splitLine:{lineStyle:{color:'#1e293b'}}},
+      yAxis:{type:'category', data:outflow.map(o=>o.name).reverse(), axisLine:{lineStyle:{color:'#334155'}}, axisLabel:{color:'#e2e8f0'}},
+      series:[{type:'bar', data:outflow.map(o=>Math.abs(o.amount)).reverse(), itemStyle:{color:'#ef4444'}, label:{show:true,position:'right',formatter:'-{c}亿',color:'#e2e8f0'}}]
+    });
+  }
+}
+
+function renderStocks() {
+  const picks = stockPicksHistory[currentDate];
+  if (!picks) return;
+  const container = document.getElementById('stockPicksCards');
+  container.innerHTML = '';
+  picks.forEach(p => {
+    const scoreClass = p.score >= 7 ? 'score-high' : p.score >= 4 ? 'score-mid' : 'score-low';
+    const signalColor = p.signal.includes('强烈看多') ? '#34d399' : p.signal.includes('看多') ? '#10b981' : p.signal.includes('关注') ? '#fbbf24' : '#f87171';
+    const card = document.createElement('div');
+    card.className = 'glass-card';
+    card.style.cssText = 'display:inline-block;width:100%;max-width:400px;margin-right:12px;';
+    card.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div>
+          <div style="font-size:18px;font-weight:700">${p.name}</div>
+          <div style="font-size:13px;color:#94a3b8">${p.code}</div>
+        </div>
+        <span class="score-badge ${scoreClass}">${p.score}</span>
+      </div>
+      <div style="font-size:13px;color:#94a3b8;line-height:1.6;margin-bottom:10px">${p.reason}</div>
+      <div style="display:flex;gap:8px">
+        <span class="weight-chip" style="background:${signalColor}20;color:${signalColor}">${p.signal}</span>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+  
+  const tbody = document.querySelector('#stockHistoryTable tbody');
+  tbody.innerHTML = '';
+  Object.entries(stockPicksHistory).forEach(([date, dayPicks]) => {
+    dayPicks.forEach(p => {
+      const tr = document.createElement('tr');
+      const signalColor = p.signal.includes('看多') ? '#34d399' : p.signal.includes('关注') ? '#fbbf24' : '#f87171';
+      tr.innerHTML = `<td>${date}</td><td>${p.code}</td><td>${p.name}</td><td style="color:${signalColor}">${p.signal}</td><td>${p.score}</td><td>${p.reason}</td>`;
+      tbody.appendChild(tr);
+    });
+  });
+}
+
+let stockTrendInst = null;
+function initStocksChart() {
+  const dom = document.getElementById('stockTrendChart');
+  if (!dom) return;
+  if (stockTrendInst) stockTrendInst.dispose();
+  stockTrendInst = echarts.init(dom);
+  
+  const codes = [...new Set(Object.values(stockPicksHistory).flat().map(p => p.code))];
+  const names = {};
+  Object.values(stockPicksHistory).flat().forEach(p => names[p.code] = p.name);
+  
+  const series = codes.map(code => ({
+    name: names[code] || code,
+    type: 'line',
+    smooth: true,
+    data: dates.map(d => {
+      const pick = (stockPicksHistory[d] || []).find(p => p.code === code);
+      return pick ? pick.score : null;
+    })
+  }));
+  
+  stockTrendInst.setOption({
+    backgroundColor:'#111827', textStyle:{color:'#e2e8f0'},
+    tooltip:{trigger:'axis'},
+    legend:{data:codes.map(c => names[c] || c), textStyle:{color:'#e2e8f0'}},
+    xAxis:{type:'category', data:dates, axisLine:{lineStyle:{color:'#334155'}}, axisLabel:{color:'#e2e8f0'}},
+    yAxis:{type:'value', min:0, max:10, axisLine:{lineStyle:{color:'#334155'}}, axisLabel:{color:'#e2e8f0'}, splitLine:{lineStyle:{color:'#1e293b'}}},
+    series: series
+  });
+}
+
+function renderWeekly() {
+  const wr = weeklyReviews[currentDate];
+  if (!wr) {
+    document.getElementById('weeklySummary').innerHTML = '<div style="color:#94a3b8;padding:20px">当前日期暂无周度复盘数据</div>';
+    document.getElementById('weeklyEvents').innerHTML = '';
+    document.getElementById('weeklyVerify').innerHTML = '';
+    document.getElementById('weeklyOutlook').innerHTML = '';
+    document.getElementById('weeklyMonitor').innerHTML = '';
+    return;
+  }
+  
+  const s = document.getElementById('weeklySummary');
+  s.innerHTML = `
+    <div style="font-size:14px;color:#e2e8f0;line-height:1.8;margin-bottom:10px">${wr.weekly_summary}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <span class="weight-chip">时间范围: ${wr.week_range}</span>
+    </div>
+  `;
+  
+  const e = document.getElementById('weeklyEvents');
+  e.innerHTML = '<ul class="monitor-list">' + wr.key_events.map(ev => `<li>${ev}</li>`).join('') + '</ul>';
+  
+  const v = document.getElementById('weeklyVerify');
+  v.innerHTML = '';
+  if (wr.weekly_prediction_verify) {
+    const table = document.createElement('table');
+    table.innerHTML = '<thead><tr><th>日期</th><th>预测</th><th>实际</th><th>验证</th></tr></thead><tbody></tbody>';
+    wr.weekly_prediction_verify.forEach(pv => {
+      const tagCls = pv.result === 'correct' ? 'tag-correct' : pv.result === 'partial' ? 'tag-partial' : 'tag-wrong';
+      const tagText = pv.result === 'correct' ? '正确' : pv.result === 'partial' ? '部分' : '错误';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${pv.date}</td><td>${pv.prediction}</td><td>${pv.actual}</td><td><span class="tag ${tagCls}">${tagText}</span></td>`;
+      table.querySelector('tbody').appendChild(tr);
+    });
+    v.appendChild(table);
+  }
+  
+  const o = document.getElementById('weeklyOutlook');
+  if (wr.next_week_outlook) {
+    const no = wr.next_week_outlook;
+    const confColor = no.confidence >= 60 ? '#34d399' : no.confidence >= 45 ? '#fbbf24' : '#f87171';
+    o.innerHTML = `
+      <div style="font-size:18px;font-weight:700;color:var(--accent);margin-bottom:10px">${no.direction}</div>
+      <div style="font-size:14px;color:#e2e8f0;margin-bottom:10px">置信度: <span style="color:${confColor};font-weight:700">${no.confidence}%</span></div>
+      <div style="font-size:13px;color:#94a3b8;margin-bottom:10px"><strong>催化剂:</strong><br>${no.key_catalysts.join('<br>')}</div>
+      <div style="font-size:13px;color:#94a3b8"><strong>风险:</strong><br>${no.risks.join('<br>')}</div>
+    `;
+  }
+  
+  const m = document.getElementById('weeklyMonitor');
+  if (wr.next_week_outlook && wr.next_week_outlook.monitor_list) {
+    m.innerHTML = wr.next_week_outlook.monitor_list.map(item => `<li>${item}</li>`).join('');
+  }
+}
+
+function renderModel() {
+  const wh = document.getElementById('weightHistory');
+  wh.innerHTML = '';
+  dataAll.forEach(d => {
+    const box = document.createElement('div');
+    box.style.cssText = 'margin-bottom:10px;padding:10px;border:1px solid var(--border);border-radius:6px;';
+    const wa = d.model_learning.weight_adjustments;
+    const waStr = Object.entries(wa).map(([k,v]) => `${k}: ${v}`).join(' | ');
+    box.innerHTML = `<strong>${d.meta.date}</strong> — ${waStr}`;
+    wh.appendChild(box);
+  });
+  const tbody = document.querySelector('#historyTable tbody');
+  tbody.innerHTML = '';
+  dataAll.forEach(d => {
+    const pv = d.prediction_verify;
+    const tagCls = pv.result === 'correct' ? 'tag-correct' : pv.result === 'partial' ? 'tag-partial' : 'tag-wrong';
+    const tagText = pv.result === 'correct' ? '正确' : pv.result === 'partial' ? '部分' : '错误';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${d.meta.date}</td><td>${d.meta.signal_id}</td><td>${d.next_day_prediction.direction}</td><td>${d.next_day_prediction.confidence}%</td><td>${pv.actual}</td><td><span class="tag ${tagCls}">${tagText}</span></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function initAll() {
+  const sel = document.getElementById('dateSelect');
+  sel.innerHTML = dates.map(d => `<option value="${d}"${d === currentDate ? ' selected' : ''}>${d}</option>`).join('');
+  currentData = getDataByDate(currentDate);
+  renderOverview();
+  renderEngine();
+  renderVerify();
+  renderStrategy();
+  renderCapital();
+  renderStocks();
+  renderWeekly();
+  renderModel();
+  initRadar();
+  initGauge();
+  initThermometer();
+  // 其他图表在标签页切换时按需初始化
+}
+
+window.addEventListener('resize', () => {
+  if(radarChartInst) radarChartInst.resize();
+  if(gaugeChartInst) gaugeChartInst.resize();
+  if(verifyChartInst) verifyChartInst.resize();
+  if(strategyChartInst) strategyChartInst.resize();
+  if(beatingChartInst) beatingChartInst.resize();
+  if(sectorHeatInst) sectorHeatInst.resize();
+  if(fiveDimTrendInst) fiveDimTrendInst.resize();
+  if(accuracyPieInst) accuracyPieInst.resize();
+  if(dimCompareInst) dimCompareInst.resize();
+  if(accuracyTrendInst) accuracyTrendInst.resize();
+  if(sentimentInst) sentimentInst.resize();
+  if(capitalInInst) capitalInInst.resize();
+  if(capitalOutInst) capitalOutInst.resize();
+  if(stockTrendInst) stockTrendInst.resize();
+});
+
+document.addEventListener('DOMContentLoaded', initAll);
+
+// 键盘快捷键
+document.addEventListener('keydown', e => {
+  if (e.altKey) {
+    const tabs = ['overview','engine','verify','strategy','history','capital','stocks','weekly','model'];
+    const idx = parseInt(e.key) - 1;
+    if (idx >= 0 && idx < tabs.length) {
+      const btn = document.querySelector(`.tab-btn[data-tab="${tabs[idx]}"]`);
+      if (btn) btn.click();
+    }
+  }
+});
+</script>
+</body>
+</html>
