@@ -122,27 +122,17 @@ tr:hover td{background:rgba(59,130,246,.06)}
 .chart-box{height:240px}
 .main{padding:12px 16px 70px}
 .mobile-nav{display:flex !important}
+.mobile-topbar{display:flex !important}
+.brand{display:none}
 }
 .mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:56px;background:linear-gradient(180deg,#0a0f1a 0%,#060a14 100%);border-top:1px solid var(--border);z-index:1000;justify-content:space-around;align-items:center;padding:0 4px}
 .mobile-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px 0;border-radius:8px;border:none;background:none;color:var(--text-muted);font-size:10px;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
 .mobile-nav-item.active{color:var(--accent);background:rgba(59,130,246,0.1)}
 .mobile-nav-item .icon{font-size:18px}
-.mobile-topbar{display:none;padding:10px 16px;background:var(--bg-card);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}
-@media(max-width:900px){
-.mobile-topbar{display:flex !important}
-.brand{display:none}
-}
+.mobile-topbar{display:none;padding:10px 16px;background:var(--bg-card);border-bottom:1px solid var(--border);align-items:center;justify-content:space-between;gap:10px}
 .mobile-topbar .brand-title{font-size:14px;font-weight:700;color:var(--text)}
 .mobile-topbar select{background:var(--bg-elevated);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;outline:none;flex:1;max-width:140px}
-.app{grid-template-columns:1fr;grid-template-rows:auto 1fr}
-.sidebar{display:none}
-.kpi-grid{grid-template-columns:repeat(2,1fr)}
-.two-col,.three-col{grid-template-columns:1fr}
-.chart-box{height:280px}
-}
-</style>
-</head>
-<body>
+</style><body>
 <div class="app">
 <div class="mobile-topbar">
 <div class="brand-title">五维三层市场复盘 v4.0</div>
