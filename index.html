@@ -115,6 +115,25 @@ tr:hover td{background:rgba(59,130,246,.06)}
 .stock-card:hover{border-color:var(--border-hover)}
 .empty-state{padding:40px;text-align:center;color:var(--text-dim);font-size:14px}
 @media(max-width:900px){
+.app{grid-template-columns:1fr;grid-template-rows:auto 1fr auto}
+.sidebar{display:none}
+.kpi-grid{grid-template-columns:repeat(2,1fr)}
+.two-col,.three-col{grid-template-columns:1fr}
+.chart-box{height:240px}
+.main{padding:12px 16px 70px}
+.mobile-nav{display:flex !important}
+}
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:56px;background:linear-gradient(180deg,#0a0f1a 0%,#060a14 100%);border-top:1px solid var(--border);z-index:1000;justify-content:space-around;align-items:center;padding:0 4px}
+.mobile-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px 0;border-radius:8px;border:none;background:none;color:var(--text-muted);font-size:10px;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
+.mobile-nav-item.active{color:var(--accent);background:rgba(59,130,246,0.1)}
+.mobile-nav-item .icon{font-size:18px}
+.mobile-topbar{display:none;padding:10px 16px;background:var(--bg-card);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}
+@media(max-width:900px){
+.mobile-topbar{display:flex !important}
+.brand{display:none}
+}
+.mobile-topbar .brand-title{font-size:14px;font-weight:700;color:var(--text)}
+.mobile-topbar select{background:var(--bg-elevated);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;outline:none;flex:1;max-width:140px}
 .app{grid-template-columns:1fr;grid-template-rows:auto 1fr}
 .sidebar{display:none}
 .kpi-grid{grid-template-columns:repeat(2,1fr)}
@@ -125,6 +144,10 @@ tr:hover td{background:rgba(59,130,246,.06)}
 </head>
 <body>
 <div class="app">
+<div class="mobile-topbar">
+<div class="brand-title">五维三层市场复盘 v4.0</div>
+<select id="dateSelectMobile"></select>
+</div>
 <aside class="sidebar">
 <div class="brand">
 <h1>五维三层市场复盘</h1>
@@ -228,6 +251,13 @@ tr:hover td{background:rgba(59,130,246,.06)}
 </div>
 </div>
 </main>
+<nav class="mobile-nav">
+<button class="mobile-nav-item active" data-page="overview"><span class="icon">📊</span>总览</button>
+<button class="mobile-nav-item" data-page="engine"><span class="icon">⚙️</span>推导</button>
+<button class="mobile-nav-item" data-page="verify"><span class="icon">✅</span>验证</button>
+<button class="mobile-nav-item" data-page="strategy"><span class="icon">🎯</span>策略</button>
+<button class="mobile-nav-item" data-page="history"><span class="icon">📈</span>趋势</button>
+</nav>
 </div>
 <script>
 // ===================== 数据层 =====================
@@ -333,6 +363,57 @@ return idx > 0 ? DATA[idx - 1] : null;
 function getDateIndex(date) { return DATES.indexOf(date); }
 
 // ===================== 导航与页面切换 =====================
+const navItems = document.querySelectorAll('.nav-item');
+const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
+const pages = document.querySelectorAll('.page');
+
+function switchPage(target) {
+navItems.forEach(n => n.classList.remove('active'));
+mobileNavItems.forEach(n => n.classList.remove('active'));
+pages.forEach(p => p.classList.remove('active'));
+navItems.forEach(n => { if(n.dataset.page === target) n.classList.add('active'); });
+mobileNavItems.forEach(n => { if(n.dataset.page === target) n.classList.add('active'); });
+document.getElementById('page-' + target).classList.add('active');
+setTimeout(() => {
+if(target === 'overview') renderOverview();
+if(target === 'engine') renderEngine();
+if(target === 'verify') renderVerify();
+if(target === 'strategy') renderStrategy();
+if(target === 'history') renderHistory();
+if(target === 'capital') renderCapital();
+if(target === 'stocks') renderStocks();
+if(target === 'weekly') renderWeekly();
+requestAnimationFrame(() => Object.values(charts).forEach(c => c && c.resize()));
+}, 100);
+}
+
+navItems.forEach(item => {
+item.addEventListener('click', () => switchPage(item.dataset.page));
+});
+mobileNavItems.forEach(item => {
+item.addEventListener('click', () => switchPage(item.dataset.page));
+});
+
+function onDateChange(val) {
+currentDate = val;
+currentData = getDataByDate(currentDate);
+document.getElementById('dateSelect').value = currentDate;
+const mobileSel = document.getElementById('dateSelectMobile');
+if(mobileSel) mobileSel.value = currentDate;
+const activePage = document.querySelector('.page.active').id.replace('page-','');
+if(activePage === 'overview') renderOverview();
+if(activePage === 'engine') renderEngine();
+if(activePage === 'verify') renderVerify();
+if(activePage === 'strategy') renderStrategy();
+if(activePage === 'history') renderHistory();
+if(activePage === 'capital') renderCapital();
+if(activePage === 'stocks') renderStocks();
+if(activePage === 'weekly') renderWeekly();
+}
+
+document.getElementById('dateSelect').addEventListener('change', e => onDateChange(e.target.value));
+const mobileDateSel = document.getElementById('dateSelectMobile');
+if(mobileDateSel) mobileDateSel.addEventListener('change', e => onDateChange(e.target.value));
 const navItems = document.querySelectorAll('.nav-item');
 const pages = document.querySelectorAll('.page');
 
@@ -1118,6 +1199,21 @@ m.innerHTML = wr.next_week_outlook.monitor_list.map(item => `<li>${item}</li>`).
 
 // ===================== 初始化 =====================
 function init() {
+const sel = document.getElementById('dateSelect');
+sel.innerHTML = DATES.map(d => `<option value="${d}"${d === currentDate ? ' selected' : ''}>${d}</option>`).join('');
+const mobileSel = document.getElementById('dateSelectMobile');
+if(mobileSel) mobileSel.innerHTML = DATES.map(d => `<option value="${d}"${d === currentDate ? ' selected' : ''}>${d}</option>`).join('');
+currentData = getDataByDate(currentDate);
+renderOverview();
+
+// 默认渲染其他页面数据（但不显示图表）
+renderEngine();
+renderVerify();
+renderStrategy();
+renderCapital();
+renderStocks();
+renderWeekly();
+}
 const sel = document.getElementById('dateSelect');
 sel.innerHTML = DATES.map(d => `<option value="${d}"${d === currentDate ? ' selected' : ''}>${d}</option>`).join('');
 currentData = getDataByDate(currentDate);
