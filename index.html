@@ -332,12 +332,9 @@ function renderAll() {
   // Prediction
   renderPrediction(d);
   // History charts
-  renderHistoryCharts();
+  initHistoryCharts();
   // Weekly
   renderWeekly();
-
-  // Top date select
-  renderHistoryCharts();
 
   // Top date select
   const sel = el('date-select');
