@@ -185,6 +185,9 @@ html, body {
     <div class="nav-item" id="nav-history" onclick="switchPage('history')">
       <span class="nav-icon">📈</span><span>历史趋势</span>
     </div>
+    <div class="nav-item" id="nav-weekly" onclick="switchPage('weekly')">
+      <span class="nav-icon">📅</span><span>周度复盘</span>
+    </div>
   </div>
 
   <div class="main">
@@ -260,6 +263,12 @@ html, body {
         <div class="section-title" style="margin-top:16px">预测准确率累计</div>
         <div class="chart-container" id="chart-hist-acc"></div>
       </div>
+
+      <!-- Page: Weekly -->
+      <div class="page" id="page-weekly">
+        <div class="section-title">周度复盘</div>
+        <div id="weekly-content"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -281,8 +290,12 @@ html, body {
   <div class="bnav-item" id="bnav-history" onclick="switchPage('history')">
     <span class="bnav-icon">📈</span><span>历史</span>
   </div>
+  <div class="bnav-item" id="bnav-weekly" onclick="switchPage('weekly')">
+    <span class="bnav-icon">📅</span><span>周度</span>
+  </div>
 </div>
 
+<script src="data.js"></script>
 <script>
 
 const MARKET_DATA = {"2026-07-06": {"meta": {"system": "五维三层市场分析系统 v3.2", "date": "2026-07-06", "signal_id": "SIG-20260706-001", "version": "3.2"}, "market_variables_top3": ["科创50暴跌-7.7%，半导体算力硬件产业链大幅回调", "上证跌破4100点，深成指/创业板暴跌", "全市场超5000只个股下跌，恐慌情绪蔓延"], "five_dimensions": {"macro": {"name": "宏观", "score": 2, "max": 10, "bias": "偏空", "detail": "上证-2.03%跌破4100，深成指-3.85%/创业板-5.71%，全面暴跌"}, "micro": {"name": "微观", "score": 2, "max": 10, "bias": "全面调整", "detail": "科创50暴跌-7.7%，半导体、算力、存储全线下挫；仅超硬材料/黄金逆势"}, "peripheral": {"name": "外围", "score": 3, "max": 10, "bias": "偏空", "detail": "美股科技股调整传导，亚太市场情绪受压"}, "internal": {"name": "内围", "score": 2, "max": 10, "bias": "失血", "detail": "全市场恐慌抛售，主力资金大幅净流出，融资盘踩踏"}, "style": {"name": "风格", "score": 2, "max": 10, "bias": "无差别杀跌", "detail": "成长价值双杀，科技蓝筹普跌；无明显风格偏好"}}, "summary": {"avg_score": 2.2, "beating_index": 80.0, "stage": "暴跌期", "stage_desc": "利空集中释放，全市场恐慌性杀跌"}, "prediction_verify": {"source": "前序预测", "content": "科技板块短期承压，注意风险", "actual": "科创50暴跌-7.7%，验证悲观预期", "result": "correct"}, "model_learning": {"lessons": ["高位科技板块回调幅度远超预期，需加强风险预警", "利空半衰期模型启动：暴跌当日为最坏时刻"], "weight_adjustments": {"risk_warning": "+1.5", "time_decay": "+1.0"}}, "next_day_prediction": {"direction": "探底企稳", "confidence": 55, "reason": "暴跌后次日通常有技术性反弹"}, "sector_heat": {"半导体": 0, "AI算力": 0, "新能源": 0, "消费": 1.2, "金融": 2.7, "医药": 6.2, "军工": 6.7, "周期": 9.2}, "capital_flow": {"inflow": [{"name": "黄金", "amount": 28.5}, {"name": "超硬材料", "amount": 12.3}, {"name": "银行", "amount": 8.7}], "outflow": [{"name": "半导体", "amount": -156.2}, {"name": "AI算力", "amount": -98.5}, {"name": "消费电子", "amount": -67.3}]}, "stock_picks": [{"code": "000100.SZ", "name": "TCL科技", "signal": "观望", "score": 3.5, "reason": "主升浪后洗盘，等待缩量止跌信号"}, {"code": "688981.SH", "name": "中芯国际", "signal": "回避", "score": 2.0, "reason": "半导体板块暴跌，短期回避"}, {"code": "601899.SH", "name": "紫金矿业", "signal": "关注", "score": 6.5, "reason": "黄金避险属性，资金流入"}]}, "2026-07-07": {"meta": {"system": "五维三层市场分析系统 v3.2", "date": "2026-07-07", "signal_id": "SIG-20260707-001", "version": "3.2"}, "market_variables_top3": ["大盘下探4000点关口，市场寻底", "科创50连续3日微涨企稳，科技板块止跌信号", "深成指/创业板持续走弱，资金向主板集中"], "five_dimensions": {"macro": {"name": "宏观", "score": 3, "max": 10, "bias": "偏空", "detail": "上证-1.26%下探4000点，但科创50微涨+0.27%止跌；外围暂无新增利空"}, "micro": {"name": "微观", "score": 5, "max": 10, "bias": "结构性机会", "detail": "大盘调整但科技板块初步止跌；深成指-1.24%/创业板-0.94%仍弱"}, "peripheral": {"name": "外围", "score": 4, "max": 10, "bias": "中性偏弱", "detail": "外围市场平稳，亚太情绪缓和"}, "internal": {"name": "内围", "score": 3, "max": 10, "bias": "失血", "detail": "上证缩量跌至3990，量能萎缩至5144亿；科创放量止跌"}, "style": {"name": "风格", "score": 5, "max": 10, "bias": "均衡", "detail": "科技成长初步企稳，价值蓝筹补跌；风格向成长倾斜"}}, "summary": {"avg_score": 4.0, "beating_index": 60.0, "stage": "寻底期", "stage_desc": "大盘调整但科技先行企稳，市场处于寻底阶段"}, "prediction_verify": {"source": "SIG-20260706", "content": "暴跌后次日技术性反弹", "actual": "上证继续下跌-1.26%，预测部分错误", "result": "partial"}, "model_learning": {"lessons": ["暴跌次日不反弹，说明抛压未完全释放", "科创50领先企稳，可作为先行指标"], "weight_adjustments": {"leading_index": "+0.5", "rebound_timing": "-0.3"}}, "next_day_prediction": {"direction": "继续筑底", "confidence": 50, "reason": "科创50三连阳，但主板仍弱，分化加剧"}, "sector_heat": {"半导体": 0, "AI算力": 1, "新能源": 0.5, "消费": 4, "金融": 6.5, "医药": 5, "军工": 8.5, "周期": 8}, "capital_flow": {"inflow": [{"name": "半导体", "amount": 15.2}, {"name": "科创50ETF", "amount": 8.6}, {"name": "黄金", "amount": 5.3}], "outflow": [{"name": "银行", "amount": -32.1}, {"name": "地产", "amount": -18.5}, {"name": "保险", "amount": -12.7}]}, "stock_picks": [{"code": "000100.SZ", "name": "TCL科技", "signal": "观望", "score": 4.0, "reason": "洗盘持续，量能未缩至地量"}, {"code": "688981.SH", "name": "中芯国际", "signal": "关注", "score": 5.0, "reason": "科创50止跌，半导体或有修复"}, {"code": "688012.SH", "name": "中微公司", "signal": "关注", "score": 5.5, "reason": "科技板块先行企稳信号"}]}, "2026-07-08": {"meta": {"system": "五维三层市场分析系统 v3.2", "date": "2026-07-08", "signal_id": "SIG-20260708-001", "version": "3.2"}, "market_variables_top3": ["深成指/创业板加速下行，创阶段新低", "科创50三连阳逆势走强，资金持续流入科技", "上证逼近3970，市场恐慌情绪蔓延"], "five_dimensions": {"macro": {"name": "宏观", "score": 5, "max": 10, "bias": "中性", "detail": "上证-0.49%续跌，深成指-1.87%/创业板-1.70%加速下行"}, "micro": {"name": "微观", "score": 5, "max": 10, "bias": "结构性机会", "detail": "科创50+0.73%三连阳，科技板块逆势走强；中小盘承压"}, "peripheral": {"name": "外围", "score": 4, "max": 10, "bias": "中性偏弱", "detail": "外围平稳，A股内部调整为主"}, "internal": {"name": "内围", "score": 5, "max": 10, "bias": "震荡", "detail": "上证缩量至4962亿，科创放量至1572亿；资金从主板向科创迁移"}, "style": {"name": "风格", "score": 5, "max": 10, "bias": "均衡", "detail": "科技成长三连阳，价值蓝筹持续调整；风格切换明显"}}, "summary": {"avg_score": 4.8, "beating_index": 52.0, "stage": "筑底期", "stage_desc": "科技先行筑底，主板持续寻底，分化加剧"}, "prediction_verify": {"source": "SIG-20260707", "content": "继续筑底，分化加剧", "actual": "科创50三连阳，主板续跌，分化验证", "result": "correct"}, "model_learning": {"lessons": ["科创50三连阳确认领先性，资金向科技迁移", "风格切换信号明确：主板→科创"], "weight_adjustments": {"style_rotation": "+1.0", "leading_index": "+0.8"}}, "next_day_prediction": {"direction": "科技修复", "confidence": 60, "reason": "科创50三连阳，AI硬件板块3个交易日内存在情绪修复反弹"}, "sector_heat": {"半导体": 1.3, "AI算力": 1.8, "新能源": 3.3, "消费": 2.8, "金融": 7.3, "医药": 9.8, "军工": 9.3, "周期": 10}, "capital_flow": {"inflow": [{"name": "半导体", "amount": 42.8}, {"name": "AI算力", "amount": 28.5}, {"name": "先进封装", "amount": 18.3}], "outflow": [{"name": "银行", "amount": -28.6}, {"name": "白酒", "amount": -15.2}, {"name": "地产", "amount": -11.8}]}, "stock_picks": [{"code": "000100.SZ", "name": "TCL科技", "signal": "关注", "score": 5.0, "reason": "洗盘进入尾声，关注量能变化"}, {"code": "688981.SH", "name": "中芯国际", "signal": "看多", "score": 7.0, "reason": "科创50三连阳，半导体资金持续流入"}, {"code": "002371.SZ", "name": "北方华创", "signal": "看多", "score": 6.5, "reason": "半导体设备龙头，资金净流入"}]}, "2026-07-09": {"meta": {"system": "五维三层市场分析系统 v3.2", "date": "2026-07-09", "signal_id": "SIG-20260709-001", "version": "3.2"}, "market_variables_top3": ["科创50暴涨+8.41%，AI硬件板块情绪修复", "三大指数全面大涨，市场信心恢复", "量能显著放大至2.93万亿，增量资金入场"], "five_dimensions": {"macro": {"name": "宏观", "score": 7, "max": 10, "bias": "偏多", "detail": "上证大涨+1.65%收复4000点报4036.59，深成指+3.07%/创业板+4.49%，全面修复"}, "micro": {"name": "微观", "score": 8, "max": 10, "bias": "科技爆发", "detail": "科创50暴涨+8.41%创阶段最大单日涨幅；半导体全线爆发，中芯国际涨超14%"}, "peripheral": {"name": "外围", "score": 6, "max": 10, "bias": "中性偏强", "detail": "美股芯片股普涨，应用材料涨近10%；SK海力士ADR定价催化全球半导体情绪"}, "internal": {"name": "内围", "score": 7, "max": 10, "bias": "承接", "detail": "上证放量至5530亿，科创放量至2245亿；增量资金入场，主力资金回流半导体"}, "style": {"name": "风格", "score": 7, "max": 10, "bias": "科技成长", "detail": "科技成长暴力反弹，双创领涨；风格切换至成长确认，长鑫科技申购催化"}}, "summary": {"avg_score": 6.4, "beating_index": 36.0, "stage": "修复期", "stage_desc": "科技板块暴力修复，市场从筑底转向反弹"}, "prediction_verify": {"source": "SIG-20260708 P4", "content": "AI硬件板块3个交易日内存在情绪修复反弹", "actual": "7/9科创50暴涨+8.41%，3日累计涨幅+9.45%，预测完全验证", "result": "correct"}, "model_learning": {"lessons": ["利空半衰期模型有效：7/2暴跌→7/6企稳→7/9修复，完整3日周期", "A股对美股利空的脱敏能力强于预期：7/6当日即反弹", "科创50领先性确认：7/7-7/8三连阳领先主板见底"], "weight_adjustments": {"time_decay": "+1.0（3日修复窗口验证有效，延长权重）", "leading_index": "+0.8（科创50领先上证1-2日，提高权重）", "internal_resilience": "+0.5（A股内生性韧性被持续低估）"}}, "next_day_prediction": {"direction": "震荡分化", "confidence": 55, "reason": "暴涨次日通常分化，关注半导体持续性；上证4036点压力需消化"}, "sector_heat": {"半导体": 3.5, "AI算力": 6, "新能源": 7.5, "消费": 6, "金融": 9.5, "医药": 9, "军工": 10, "周期": 10}, "capital_flow": {"inflow": [{"name": "半导体", "amount": 128.5}, {"name": "AI算力", "amount": 86.3}, {"name": "中芯国际", "amount": 45.2}, {"name": "先进封装", "amount": 38.7}], "outflow": [{"name": "银行", "amount": -22.1}, {"name": "白酒", "amount": -8.5}, {"name": "保险", "amount": -6.3}]}, "stock_picks": [{"code": "000100.SZ", "name": "TCL科技", "signal": "看多", "score": 6.5, "reason": "市场情绪全面修复，科技股普涨"}, {"code": "688981.SH", "name": "中芯国际", "signal": "强烈看多", "score": 8.5, "reason": "暴涨14%，半导体情绪全面爆发"}, {"code": "601138.SH", "name": "工业富联", "signal": "强烈看多", "score": 8.0, "reason": "业绩预增100%，算力板块龙头"}]}, "2026-07-10": {"meta": {"system": "五维三层市场分析系统 v3.2", "date": "2026-07-10", "signal_id": "SIG-20260710-001", "version": "3.2", "type": "盘后复盘"}, "market_variables_top3": ["沪指跌1%失守4000点，深成指跌2.29%，创业板指暴跌4.37%，科创50尾盘跌超5%——科技龙头全线阴包阳", "商业航天历史性突破：长征十号乙运载火箭一子级可控回收成功，航天装备板块逆势暴涨", "半导体/AI算力放量暴跌：7月9日涨幅巨大，7月10日全线回吐，电子化学品领跌"], "five_dimensions": {"macro": {"name": "宏观", "score": 4, "max": 10, "bias": "偏弱", "detail": "沪指收盘3996.16（-1.00%），深成指-2.29%，创业板指-4.37%，科创50尾盘跌超5%。主要指数全线暴跌，创业板尤为惨烈。两市成交额超3.4万亿（高换手），但指数破位显示权重和主线资金撤离。央行Q2例会提适度宽松货币政策，但6月末外汇储备环比降260亿至34163亿美元，资金面存压力。"}, "micro": {"name": "微观", "score": 5, "max": 10, "bias": "极端分化", "detail": "板块极端分化。领涨：航天装备（+4.8%）、航海装备（+3.5%）、医疗服务（+3.2%）、影视院线（+2.1%）、白酒（+1.8%）。领跌：电子化学品（-7.2%）、半导体（-6.8%）、机器人（-5.5%）、能源金属（-4.8%）。科技龙头全线阴包阳——7月9日暴涨，7月10日暴跌反包，典型的暴涨次日大分化。"}, "peripheral": {"name": "外围", "score": 6, "max": 10, "bias": "中性偏暖", "detail": "隔夜美股收涨：道指+0.27%，纳指+1.3%，标普+0.81%。芯片股普涨：美光+4%，闪迪+7%，应用材料业绩向好。美联储2026年预计再降息1-2次。外围本身偏暖，但A股科技板块反而暴跌，说明A股科技股此前涨幅过大，与美股出现背离。"}, "internal": {"name": "内围", "score": 3, "max": 10, "bias": "失血", "detail": "主力资金全天大幅净流出。南向资金7月10日净卖出59.95亿港元。板块资金流向：医药/航天逆势获资金，但半导体/机器人遭百亿级抛售。高换手（3.4万亿）+指数暴跌 = 典型的放量杀跌，机构资金撤离明显。超大单和大单双双净流出，中单和小单净流入显示散户抄底。"}, "style": {"name": "风格", "score": 4, "max": 10, "bias": "科技→防御切换", "detail": "市场风格从7月9日的纯科技成长，暴力切换至7月10日的防御+事件驱动。航天装备（政策/技术突破）、医疗服务（避险）逆势上涨，而半导体/AI算力/机器人全线暴跌。暴涨次日规律验证：7月9日科创50+8.41%→7月10日科创50-5%以上，经典的暴涨次日大分化。指数权重相对抗跌，但科技成长血崩。"}}, "summary": {"avg_score": 4.4, "beating_index": 78.0, "stage": "退潮期", "stage_desc": "暴涨次日大分化，科技主线退潮，资金向防御和事件驱动板块切换"}, "prediction_verify": {"source": "SIG-20260709-001", "predicted_direction": "震荡分化", "predicted_confidence": 65, "predicted_key": "暴涨次日通常分化，关注半导体持续性；上证4036点压力需消化", "actual_direction": "大幅下跌分化", "actual_index_change": "沪指-1.00%，深成指-2.29%，创业板指-4.37%，科创50-5%+", "actual_key": "科技龙头全线阴包阳，暴涨次日暴跌，风格暴力切换至防御", "result": "partial", "verify_details": {"方向预测": "预测震荡分化，实际大幅下跌分化——方向判断方向正确但幅度严重低估", "五维评分": "宏观/内围评分低估（实际更弱），微观/风格评分高估（实际更差）", "传导链": "验证了暴涨次日分化规律，但未预料到阴包阳级别的暴跌，传导链识别部分准确"}}, "model_learning": {"correct_dimensions": ["风格"], "wrong_dimensions": ["宏观", "微观", "内围"], "missed_variables": ["7月9日科技涨幅过大（科创50+8.41%为极端值）→暴涨次日反包概率被低估", "半导体/AI算力板块获利盘巨大→放量暴跌的抛压强度被低估", "创业板-4.37%的跌幅远超预期→指数层面的系统性风险被低估"], "weight_adjustments": {"extreme_rally_reversal": "+2.0（极端暴涨次日，反包概率权重需大幅提升）", "profit_taking_pressure": "+1.5（板块获利盘厚度→抛压强度权重提升）", "index_breadth_divergence": "维持+1.0（已确认）", "event_driven_momentum": "维持+0.8（已确认）", "pharma_defensive": "+1.0（医药在退潮期的避险价值被低估）"}, "lessons": ["极端暴涨次日（科创50单日+8%以上）→次日暴跌概率>70%，此前模型低估此规律", "获利盘厚度是判断抛压的关键指标：7月9日科技股普遍+15%以上→7月10日自然暴跌", "指数与个股背离在暴涨次日会迅速收敛：7月9日指数涨个股普涨→7月10日指数跌个股暴跌", "阴包阳是A股最强烈的短期见顶信号，模型需赋予更高权重"]}, "next_day_prediction": {"direction": "震荡企稳", "confidence": 52, "reason": "7月10日暴跌释放了大量获利盘，沪指3996点接近4000整数关口存在技术性支撑。但科技主线退潮后，市场需要寻找新的主线。关注：1）航天装备能否持续（事件驱动通常短命）；2）医药生物能否成为过渡主线；3）半导体暴跌后是否出现反弹。整体情绪偏谨慎，预计缩量震荡。"}, "sector_heat": {"航天装备": 2.0, "航海装备": 3.5, "医疗服务": 3.8, "影视院线": 5.5, "白酒": 6.0, "半导体": 9.5, "电子化学品": 9.8, "机器人": 8.5, "能源金属": 8.0, "AI算力": 7.5}, "capital_flow": {"inflow": [{"name": "航天装备", "amount": 42.5}, {"name": "医疗服务", "amount": 38.2}, {"name": "航海装备", "amount": 25.6}, {"name": "白酒", "amount": 18.3}], "outflow": [{"name": "半导体", "amount": -125.8}, {"name": "AI算力", "amount": -98.6}, {"name": "机器人", "amount": -72.3}, {"name": "电子化学品", "amount": -68.5}]}, "stock_picks": [{"code": "688981.SH", "name": "中芯国际", "signal": "观望", "score": 4.0, "reason": "半导体暴跌，但龙头基本面未变，等待企稳信号"}, {"code": "000100.SZ", "name": "TCL科技", "signal": "观望", "score": 4.5, "reason": "面板+半导体双主业，暴跌后关注承接"}, {"code": "600519.SH", "name": "贵州茅台", "signal": "关注", "score": 6.5, "reason": "白酒防御属性显现，资金避风港"}], "tomorrow_watchlist": ["沪指3996点能否守住4000整数关口", "航天装备板块持续性（事件驱动通常1-2天）", "半导体/AI算力是否出现超跌反弹", "医药生物能否成为过渡主线", "两市成交额是否缩量（缩量=企稳信号）"]}};
@@ -319,6 +332,11 @@ function renderAll() {
   // Prediction
   renderPrediction(d);
   // History charts
+  renderHistoryCharts();
+  // Weekly
+  renderWeekly();
+
+  // Top date select
   renderHistoryCharts();
 
   // Top date select
@@ -672,6 +690,77 @@ function initHistoryCharts() {
       }]
     });
   }
+}
+
+function renderWeekly() {
+  const wc = el('weekly-content'); if(!wc) return;
+  if(typeof weeklyReviews === 'undefined' || !weeklyReviews) {
+    wc.innerHTML = '<div style="color:var(--text2);padding:20px">暂无周度复盘数据</div>';
+    return;
+  }
+  // Find latest weekly review
+  const dates = Object.keys(weeklyReviews).sort();
+  if(dates.length === 0) {
+    wc.innerHTML = '<div style="color:var(--text2);padding:20px">暂无周度复盘数据</div>';
+    return;
+  }
+  const latest = dates[dates.length-1];
+  const w = weeklyReviews[latest];
+  let html = '';
+  
+  // Week range
+  if(w.week_range) {
+    html += '<div class="card" style="margin-bottom:16px"><div class="card-title">本周区间</div><div style="font-size:15px;font-weight:600">' + w.week_range + '</div></div>';
+  }
+  
+  // Weekly highlights
+  if(w.key_events && w.key_events.length) {
+    html += '<div class="card" style="margin-bottom:16px"><div class="card-title">本周要点</div><ul class="var-list">';
+    w.key_events.forEach((ev, i) => {
+      html += '<li><span class="num">' + (i+1) + '</span>' + ev + '</li>';
+    });
+    html += '</ul></div>';
+  }
+  
+  // Prediction verify
+  if(w.weekly_prediction_verify && w.weekly_prediction_verify.length) {
+    html += '<div class="card" style="margin-bottom:16px"><div class="card-title">预测验证</div><table class="flow-table">';
+    html += '<tr><th>日期</th><th>预测</th><th>实际</th><th>结果</th></tr>';
+    w.weekly_prediction_verify.forEach(p => {
+      const rcls = p.result === 'correct' ? 'bull' : (p.result === 'partial' ? 'warn' : 'bear');
+      const rtext = p.result === 'correct' ? '✓' : (p.result === 'partial' ? '~' : '✗');
+      html += '<tr><td>' + p.date + '</td><td>' + (p.prediction || '-') + '</td><td>' + (p.actual || '-') + '</td><td><span class="tag ' + rcls + '">' + rtext + ' ' + p.result + '</span></td></tr>';
+    });
+    html += '</table></div>';
+  }
+  
+  // Next week outlook
+  if(w.next_week_outlook) {
+    const nwo = w.next_week_outlook;
+    html += '<div class="card" style="margin-bottom:16px"><div class="card-title">下周展望</div>';
+    html += '<div style="margin-bottom:12px"><span class="text-sm" style="color:var(--text2)">整体方向</span><span class="tag ' + getBiasClass(nwo.direction) + '" style="margin-left:8px">' + (nwo.direction || '震荡') + '</span></div>';
+    if(nwo.confidence) {
+      html += '<div style="margin-bottom:12px"><span class="text-sm" style="color:var(--text2)">置信度</span><span style="margin-left:8px;font-weight:700">' + nwo.confidence + '%</span></div>';
+    }
+    if(nwo.key_catalysts && nwo.key_catalysts.length) {
+      html += '<div style="margin-bottom:12px"><span class="text-sm" style="color:var(--text2)">关键催化</span><ul class="watch-list">';
+      nwo.key_catalysts.forEach(c => { html += '<li>' + c + '</li>'; });
+      html += '</ul></div>';
+    }
+    if(nwo.risks && nwo.risks.length) {
+      html += '<div style="margin-bottom:12px"><span class="text-sm" style="color:var(--text2)">风险点</span><ul class="watch-list">';
+      nwo.risks.forEach(r => { html += '<li>' + r + '</li>'; });
+      html += '</ul></div>';
+    }
+    if(nwo.monitor_list && nwo.monitor_list.length) {
+      html += '<div><span class="text-sm" style="color:var(--text2)">监控清单</span><ul class="watch-list">';
+      nwo.monitor_list.forEach(m => { html += '<li>' + m + '</li>'; });
+      html += '</ul></div>';
+    }
+    html += '</div>';
+  }
+  
+  wc.innerHTML = html;
 }
 
 function initChartsForPage(pid) {
