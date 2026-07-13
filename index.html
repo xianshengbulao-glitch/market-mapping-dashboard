@@ -194,11 +194,6 @@ html, body {
     <div class="topbar">
       <div class="title">五维三层市场复盘系统 v5.0</div>
       <select class="date-select" id="date-select" onchange="onDateChange(this.value)">
-      <option value="2026-07-06">2026-07-06</option>
-      <option value="2026-07-07">2026-07-07</option>
-      <option value="2026-07-08">2026-07-08</option>
-      <option value="2026-07-09">2026-07-09</option>
-      <option value="2026-07-10">2026-07-10</option>
       </select>
     </div>
 
@@ -334,7 +329,16 @@ function renderAll() {
 
   // Top date select
   const sel = el('date-select');
-  if(sel) sel.value = curDate;
+  if(sel) {
+    sel.innerHTML = '';
+    DATES.forEach(date => {
+      const opt = document.createElement('option');
+      opt.value = date;
+      opt.textContent = date;
+      sel.appendChild(opt);
+    });
+    sel.value = curDate;
+  }
 }
 
 function getBiasClass(bias) {
